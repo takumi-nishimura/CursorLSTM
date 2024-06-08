@@ -1,6 +1,7 @@
 import random
 import sys
 
+import numpy as np
 from PySide6 import QtCore, QtGui, QtWidgets
 
 
@@ -11,10 +12,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setGeometry(0, 0, 800, 600)
         self.setMouseTracking(True)
 
+        self.record_data = np.empty((0, 3))
+
         self.panel = QtWidgets.QWidget()
         self.setCentralWidget(self.panel)
 
         self.button_A = ButtonWidget("Button", [100, 400], self.panel)
+        self.button_A.button_press_signal.connect(self.recv_button_press)
 
         self.cursor_pos_list = []
         self.max_cursor_pos_list = 500
@@ -30,6 +34,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def update(self):
         self.cursor_pos = self.mapFromGlobal(QtGui.QCursor.pos())
+
+        self.relative_cursor_pos = [
+            self.cursor_pos.x() / self.width(),
+            self.cursor_pos.y() / self.height(),
+        ]
+        for i in self.relative_cursor_pos:
+            if i < 0:
+                self.relative_cursor_pos[self.relative_cursor_pos.index(i)] = 0
+            elif i > 1:
+                self.relative_cursor_pos[self.relative_cursor_pos.index(i)] = 1
+        self.record_data = np.append(
+            self.record_data,
+            np.array(
+                [[self.relative_cursor_pos[0], self.relative_cursor_pos[1], 0]]
+            ),
+            axis=0,
+        )
+
         self.cursor_pos_list.append([self.cursor_pos.x(), self.cursor_pos.y()])
         if len(self.cursor_pos_list) > self.max_cursor_pos_list:
             self.cursor_pos_list.pop(0)
@@ -60,10 +82,30 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             return -delay_index
 
+    def recv_button_press(self):
+        self.record_data = np.append(
+            self.record_data,
+            np.array(
+                [[self.relative_cursor_pos[0], self.relative_cursor_pos[1], 1]]
+            ),
+            axis=0,
+        )
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Q:
+            self.close()
+
+    def closeEvent(self, event):
+        np.savetxt("data/record_data.csv", self.record_data, delimiter=",")
+        event.accept()
+
 
 class ButtonWidget(QtWidgets.QPushButton):
+    button_press_signal = QtCore.Signal()
+
     def __init__(self, text, pos, parent=None):
         super().__init__(parent)
+        self.parent_widget = parent
         self.button_size = 100
         self.setText(text)
         self.resize(self.button_size, self.button_size)
@@ -72,6 +114,8 @@ class ButtonWidget(QtWidgets.QPushButton):
         self.clicked.connect(self.button_clicked)
 
     def button_clicked(self):
+        self.button_press_signal.emit()
+
         next_button_pos_x = random.randint(
             0, self.parentWidget().width() - self.button_size
         )
