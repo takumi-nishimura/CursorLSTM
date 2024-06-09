@@ -41,7 +41,6 @@ class CursorLSTM(nn.Module):
             self.device = torch.device("cuda")
         else:
             self.device = torch.device("cpu")
-        self.device
 
         self.lstm = nn.LSTM(
             input_size, hidden_size, num_layers, batch_first=True
@@ -92,7 +91,7 @@ OUTPUT_SIZE = 3
 SEQ_LEN = 500
 PREDICT_LEN = 50
 NUM_LAYERS = 2
-NUM_EPOCHS = 100
+NUM_EPOCHS = 300
 
 if __name__ == "__main__":
     data = np.loadtxt("data/record_data_0608.csv", delimiter=",")
