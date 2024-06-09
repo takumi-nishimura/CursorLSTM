@@ -35,9 +35,13 @@ class CursorLSTM(nn.Module):
         self.output_size = output_size
         self.num_layers = num_layers
         self.predict_len = predict_len
-        self.device = torch.device(
-            "mps" if torch.backends.mps.is_available() else "cpu"
-        )
+        if torch.backends.mps.is_available():
+            self.device = torch.device("mps")
+        elif torch.cuda.is_available():
+            self.device = torch.device("cuda")
+        else:
+            self.device = torch.device("cpu")
+        self.device
 
         self.lstm = nn.LSTM(
             input_size, hidden_size, num_layers, batch_first=True
@@ -88,7 +92,7 @@ OUTPUT_SIZE = 3
 SEQ_LEN = 300
 PREDICT_LEN = 10
 NUM_LAYERS = 2
-NUM_EPOCHS = 100
+NUM_EPOCHS = 50
 
 if __name__ == "__main__":
     data = np.loadtxt("data/record_data_0608.csv", delimiter=",")
@@ -126,7 +130,7 @@ if __name__ == "__main__":
                     f"Epoch [{epoch + 1}/{NUM_EPOCHS}], Step [{i + 1}/{len(train_dataloader)}], Loss: {loss.item()}"
                 )
     print("Finished Training")
-    torch.save(model.state_dict(), "model/cursorlstm.pth")
+    torch.save(model.state_dict(), "model/cursorlstm_ubuntu.pth")
 
     accuracy, test_loss = evaluate_model(model, test_dataloader, criterion)
     print(f"Test Accuracy: {accuracy}, Test Loss: {test_loss}")
