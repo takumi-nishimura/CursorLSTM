@@ -89,10 +89,10 @@ def evaluate_model(model, dataloader, criterion):
 INPUT_SIZE = 2
 HIDDEN_SIZE = 64
 OUTPUT_SIZE = 3
-SEQ_LEN = 300
-PREDICT_LEN = 10
+SEQ_LEN = 500
+PREDICT_LEN = 50
 NUM_LAYERS = 2
-NUM_EPOCHS = 50
+NUM_EPOCHS = 100
 
 if __name__ == "__main__":
     data = np.loadtxt("data/record_data_0608.csv", delimiter=",")
