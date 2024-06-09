@@ -46,6 +46,7 @@ class CursorLSTM(nn.Module):
             input_size, hidden_size, num_layers, batch_first=True
         )
         self.fc = nn.Linear(hidden_size, output_size)
+        self.dropout = nn.Dropout(0.2)
 
     def forward(self, x):
         h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(
@@ -56,8 +57,8 @@ class CursorLSTM(nn.Module):
         )
 
         out, _ = self.lstm(x, (h0, c0))
+        out = self.dropout(out)
         out = self.fc(out[:, -self.predict_len :])
-        out = torch.sigmoid(out)
         return out
 
 
@@ -86,7 +87,7 @@ def evaluate_model(model, dataloader, criterion):
 
 
 INPUT_SIZE = 2
-HIDDEN_SIZE = 64
+HIDDEN_SIZE = 128
 OUTPUT_SIZE = 3
 SEQ_LEN = 500
 PREDICT_LEN = 50
