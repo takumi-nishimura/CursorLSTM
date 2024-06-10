@@ -1,12 +1,14 @@
+import datetime
+
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset
-import datetime
 from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader, Dataset
 from torch.utils.tensorboard import SummaryWriter
+
 
 class CursorDataset(Dataset):
     def __init__(self, data, seq_len=50, predict_len=50):
@@ -94,7 +96,7 @@ NUM_EPOCHS = 100
 
 if __name__ == "__main__":
     date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-    writer = SummaryWriter(f'runs/cursorlstm')
+    writer = SummaryWriter(f"runs/cursorlstm")
     data = np.loadtxt("data/record_data_0610.csv", delimiter=",")
     scaler = StandardScaler()
     data = scaler.fit_transform(data)
@@ -113,12 +115,14 @@ if __name__ == "__main__":
     model.to(model.device)
     criterion = nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 10, gamma=0.1)
+    scheduler = torch.optim.lr_scheduler.StepLR(
+        optimizer, step_size=10, gamma=0.1
+    )
 
-    best_loss = float('inf')
+    best_loss = float("inf")
     best_model = None
     patience = 10
-    counter  = 0
+    counter = 0
 
     for epoch in range(NUM_EPOCHS):
         model.train()
@@ -139,7 +143,7 @@ if __name__ == "__main__":
                 )
 
         test_loss = evaluate_model(model, test_dataloader, criterion)
-        writer.add_scalar('loss', test_loss, epoch + 1)
+        writer.add_scalar("loss", test_loss, epoch + 1)
 
         if test_loss < best_loss:
             best_loss = test_loss

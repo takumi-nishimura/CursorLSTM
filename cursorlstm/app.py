@@ -135,7 +135,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     predictions = self.cursor_model(input_seq)
                     predicted_x = predictions[0, -1, 0].item() * self.width()
                     predicted_y = predictions[0, -1, 1].item() * self.height()
-                    # predicted_click = predictions[0, -1, 2].item()
+                    predicted_click = predictions[0, -1, 2].item()
                     self.predicted_cursor.cursor_pos = [
                         predicted_x,
                         predicted_y,
