@@ -65,15 +65,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_timer.start(1)
 
         if not record:
+            model_params = torch.load(
+                "model/cursorlstm_ubuntu_20240610_1545.pth",
+                map_location=torch.device("mps"),
+            )
             self.cursor_model = CursorLSTM(
-                INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE, NUM_LAYERS, 100
+                2,
+                32,
+                3,
+                2,
+                30,
             )
-            self.cursor_model.load_state_dict(
-                torch.load(
-                    "model/cursorlstm_ubuntu.pth",
-                    map_location=torch.device("mps"),
-                )
-            )
+            self.cursor_model.load_state_dict(model_params)
             self.cursor_model.to(self.cursor_model.device)
             self.cursor_model.eval()
 
