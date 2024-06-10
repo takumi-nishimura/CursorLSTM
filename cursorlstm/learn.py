@@ -18,9 +18,15 @@ class CursorDataset(Dataset):
         return len(self.data) - self.seq_len - self.predict_len + 1
 
     def __getitem__(self, idx):
+        # return (
+        #     self.data[:, 0:2][idx : idx + self.seq_len],
+        #     self.data[:,][
+        #         idx + self.seq_len : idx + self.seq_len + self.predict_len
+        #     ],
+        # )
         return (
             self.data[:, 0:2][idx : idx + self.seq_len],
-            self.data[:,][
+            self.data[:, 0:2][
                 idx + self.seq_len : idx + self.seq_len + self.predict_len
             ],
         )
@@ -87,8 +93,8 @@ def evaluate_model(model, dataloader, criterion):
 
 
 INPUT_SIZE = 2
-HIDDEN_SIZE = 128
-OUTPUT_SIZE = 3
+HIDDEN_SIZE = 64
+OUTPUT_SIZE = 2
 SEQ_LEN = 500
 PREDICT_LEN = 50
 NUM_LAYERS = 2
