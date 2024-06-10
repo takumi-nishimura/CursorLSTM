@@ -3,8 +3,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
-from torch.utils.data import DataLoader, Dataset, random_split
-
+from torch.utils.data import DataLoader, Dataset
+import datetime
 
 class CursorDataset(Dataset):
     def __init__(self, data, seq_len=50, predict_len=50):
@@ -59,6 +59,7 @@ class CursorLSTM(nn.Module):
         out, _ = self.lstm(x, (h0, c0))
         out = self.dropout(out)
         out = self.fc(out[:, -self.predict_len :])
+        out = torch.sigmoid(out)
         return out
 
 
@@ -95,7 +96,7 @@ NUM_LAYERS = 2
 NUM_EPOCHS = 300
 
 if __name__ == "__main__":
-    data = np.loadtxt("data/record_data_0608.csv", delimiter=",")
+    data = np.loadtxt("data/record_data_0610.csv", delimiter=",")
     train_data, test_data = train_test_split(
         data, test_size=0.2, shuffle=False
     )
@@ -130,7 +131,8 @@ if __name__ == "__main__":
                     f"Epoch [{epoch + 1}/{NUM_EPOCHS}], Step [{i + 1}/{len(train_dataloader)}], Loss: {loss.item()}"
                 )
     print("Finished Training")
-    torch.save(model.state_dict(), "model/cursorlstm_ubuntu.pth")
+    date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+    torch.save(model.state_dict(), f"model/cursorlstm_ubuntu_{date}.pth")
 
     accuracy, test_loss = evaluate_model(model, test_dataloader, criterion)
     print(f"Test Accuracy: {accuracy}, Test Loss: {test_loss}")
