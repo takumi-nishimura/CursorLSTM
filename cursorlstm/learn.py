@@ -88,12 +88,12 @@ def evaluate_model(model, dataloader, criterion):
 
 
 INPUT_SIZE = 2
-HIDDEN_SIZE = 64
+HIDDEN_SIZE = 32
 OUTPUT_SIZE = 3
 SEQ_LEN = 100
 PREDICT_LEN = 30
-NUM_LAYERS = 2
-NUM_EPOCHS = 300
+NUM_LAYERS = 1
+NUM_EPOCHS = 100
 
 if __name__ == "__main__":
     date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
@@ -147,12 +147,12 @@ if __name__ == "__main__":
 
         test_loss = evaluate_model(model, test_dataloader, criterion)
         writer.add_scalar("loss", test_loss, epoch + 1)
+        scheduler.step()
 
         if test_loss < best_loss:
             best_loss = test_loss
             counter = 0
             best_model = model.state_dict()
-            scheduler.step(test_loss)
         else:
             counter += 1
             if counter >= patience:
