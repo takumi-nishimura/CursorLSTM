@@ -5,6 +5,7 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 import datetime
+from sklearn.preprocessing import StandardScaler
 
 class CursorDataset(Dataset):
     def __init__(self, data, seq_len=50, predict_len=50):
@@ -88,15 +89,17 @@ def evaluate_model(model, dataloader, criterion):
 
 
 INPUT_SIZE = 2
-HIDDEN_SIZE = 64
+HIDDEN_SIZE = 16
 OUTPUT_SIZE = 3
 SEQ_LEN = 500
 PREDICT_LEN = 50
-NUM_LAYERS = 2
-NUM_EPOCHS = 300
+NUM_LAYERS = 1
+NUM_EPOCHS = 100
 
 if __name__ == "__main__":
     data = np.loadtxt("data/record_data_0610.csv", delimiter=",")
+    scaler = StandardScaler()
+    data = scaler.fit_transform(data)
     train_data, test_data = train_test_split(
         data, test_size=0.2, shuffle=False
     )
@@ -112,6 +115,12 @@ if __name__ == "__main__":
     model.to(model.device)
     criterion = nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size = 10, gamma=0.1)
+
+    best_loss = float('inf')
+    best_model = None
+    patience = 10
+    counter  = 0
 
     for epoch in range(NUM_EPOCHS):
         model.train()
@@ -130,9 +139,21 @@ if __name__ == "__main__":
                 print(
                     f"Epoch [{epoch + 1}/{NUM_EPOCHS}], Step [{i + 1}/{len(train_dataloader)}], Loss: {loss.item()}"
                 )
+
+        scheduler.step()
+        accuracy, test_loss = evaluate_model(model, test_dataloader, criterion)
+        print(f"Epoch [{epoch + 1}/{NUM_EPOCHS}], Test Accuracy: {accuracy}, Test Loss: {test_loss}")
+
+        if test_loss < best_loss:
+            best_loss = test_loss
+            counter = 0
+            best_model = model.state_dict()
+        else:
+            counter += 1
+            if counter >= patience:
+                print("Early stopping")
+                break
+
     print("Finished Training")
     date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-    torch.save(model.state_dict(), f"model/cursorlstm_ubuntu_{date}.pth")
-
-    accuracy, test_loss = evaluate_model(model, test_dataloader, criterion)
-    print(f"Test Accuracy: {accuracy}, Test Loss: {test_loss}")
+    torch.save(best_model, f"model/cursorlstm_ubuntu_{date}.pth")
