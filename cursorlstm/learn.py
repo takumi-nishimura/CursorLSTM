@@ -69,7 +69,6 @@ def evaluate_model(model, dataloader, criterion):
     model.eval()
     with torch.no_grad():
         total = 0
-        correct = 0
         total_loss = 0
         for i, (x, y) in enumerate(dataloader):
             x = x.to(model.device)
@@ -78,20 +77,18 @@ def evaluate_model(model, dataloader, criterion):
             outputs = model(x)
             loss = criterion(outputs, y)
 
-            total_loss += loss.item()
-            total += y.size(0)
-            correct += (outputs== y).sum().item()
+            total_loss += loss.item() * x.size(0)
+            total += x.size(0)
 
-        accuracy = correct / total
-        loss = total_loss / len(dataloader)
-    return accuracy, loss
+        loss = total_loss / total
+    return loss
 
 
 INPUT_SIZE = 2
-HIDDEN_SIZE = 16
+HIDDEN_SIZE = 32
 OUTPUT_SIZE = 3
-SEQ_LEN = 100
-PREDICT_LEN = 30
+SEQ_LEN = 200
+PREDICT_LEN = 10
 NUM_LAYERS = 2
 NUM_EPOCHS = 100
 
@@ -141,16 +138,14 @@ if __name__ == "__main__":
                     f"Epoch [{epoch + 1}/{NUM_EPOCHS}], Step [{i + 1}/{len(train_dataloader)}], Loss: {loss.item()}"
                 )
 
-        scheduler.step()
-        accuracy, test_loss = evaluate_model(model, test_dataloader, criterion)
-        print(f"Epoch [{epoch + 1}/{NUM_EPOCHS}], Test Accuracy: {accuracy}, Test Loss: {test_loss}")
+        test_loss = evaluate_model(model, test_dataloader, criterion)
         writer.add_scalar('loss', test_loss, epoch + 1)
-        writer.add_scalar('accuracy', accuracy, epoch + 1)
 
         if test_loss < best_loss:
             best_loss = test_loss
             counter = 0
             best_model = model.state_dict()
+            scheduler.step(test_loss)
         else:
             counter += 1
             if counter >= patience:
