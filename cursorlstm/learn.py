@@ -76,8 +76,8 @@ def evaluate_model(model, dataloader, criterion):
 
             outputs = model(x)
             loss = criterion(outputs, y)
-            total_loss += loss.item()
 
+            total_loss += loss.item()
             predictions = torch.sigmoid(outputs)
             predicted = (predictions > 0.5).float()
             total += y.size(0)
@@ -89,7 +89,7 @@ def evaluate_model(model, dataloader, criterion):
 
 
 INPUT_SIZE = 2
-HIDDEN_SIZE = 16
+HIDDEN_SIZE = 32
 OUTPUT_SIZE = 3
 SEQ_LEN = 500
 PREDICT_LEN = 50
