@@ -88,7 +88,7 @@ def evaluate_model(model, dataloader, criterion):
 
 
 INPUT_SIZE = 2
-HIDDEN_SIZE = 32
+HIDDEN_SIZE = 16
 OUTPUT_SIZE = 3
 SEQ_LEN = 100
 PREDICT_LEN = 30
@@ -96,6 +96,8 @@ NUM_LAYERS = 2
 NUM_EPOCHS = 100
 
 if __name__ == "__main__":
+    date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
+    writer = SummaryWriter(f'runs/cursorlstm')
     data = np.loadtxt("data/record_data_0610.csv", delimiter=",")
     scaler = StandardScaler()
     data = scaler.fit_transform(data)
@@ -142,6 +144,8 @@ if __name__ == "__main__":
         scheduler.step()
         accuracy, test_loss = evaluate_model(model, test_dataloader, criterion)
         print(f"Epoch [{epoch + 1}/{NUM_EPOCHS}], Test Accuracy: {accuracy}, Test Loss: {test_loss}")
+        writer.add_scalar('loss', test_loss, epoch + 1)
+        writer.add_scalar('accuracy', accuracy, epoch + 1)
 
         if test_loss < best_loss:
             best_loss = test_loss
@@ -154,5 +158,4 @@ if __name__ == "__main__":
                 break
 
     print("Finished Training")
-    date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
     torch.save(best_model, f"model/cursorlstm_ubuntu_{date}.pth")
