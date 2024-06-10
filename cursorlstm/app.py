@@ -16,12 +16,13 @@ from PySide6 import QtCore, QtGui, QtWidgets
 
 
 class MainWindow(QtWidgets.QMainWindow):
-    def __init__(self):
+    def __init__(self, record):
         super().__init__()
         self.setWindowTitle("Cursor LSTM")
         self.setGeometry(0, 0, 800, 600)
         self.setMouseTracking(True)
 
+        self.record = record
         self.record_data = np.empty((0, 3))
 
         self.panel = QtWidgets.QWidget()
@@ -63,12 +64,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.main_timer.timeout.connect(self.update)
         self.main_timer.start(1)
 
-        self.cursor_model = CursorLSTM(
-            INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE, NUM_LAYERS, PREDICT_LEN
-        )
-        self.cursor_model.load_state_dict(torch.load("model/cursorlstm.pth"))
-        self.cursor_model.to(self.cursor_model.device)
-        self.cursor_model.eval()
+        if not record:
+            self.cursor_model = CursorLSTM(
+                INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE, NUM_LAYERS, 100
+            )
+            self.cursor_model.load_state_dict(
+                torch.load(
+                    "model/cursorlstm_ubuntu.pth",
+                    map_location=torch.device("mps"),
+                )
+            )
+            self.cursor_model.to(self.cursor_model.device)
+            self.cursor_model.eval()
 
     def update(self):
         self.cursor_pos = self.mapFromGlobal(QtGui.QCursor.pos())
@@ -113,19 +120,23 @@ class MainWindow(QtWidgets.QMainWindow):
                 ][1],
             ]
 
-        if len(self.record_data) >= SEQ_LEN:
-            input_seq = np.array(self.record_data[-SEQ_LEN:][:, :2])
-            input_seq = (
-                torch.tensor(input_seq, dtype=torch.float32)
-                .unsqueeze(0)
-                .to(self.cursor_model.device)
-            )
-            with torch.no_grad():
-                predictions = self.cursor_model(input_seq)
-                predicted_x = predictions[0, -1, 0].item() * self.width()
-                predicted_y = predictions[0, -1, 1].item() * self.height()
-                predicted_click = torch.sigmoid(predictions[0, -1, 2]).item()
-                self.predicted_cursor.cursor_pos = [predicted_x, predicted_y]
+        if not self.record:
+            if len(self.record_data) >= SEQ_LEN:
+                input_seq = np.array(self.record_data[-SEQ_LEN:][:, :2])
+                input_seq = (
+                    torch.tensor(input_seq, dtype=torch.float32)
+                    .unsqueeze(0)
+                    .to(self.cursor_model.device)
+                )
+                with torch.no_grad():
+                    predictions = self.cursor_model(input_seq)
+                    predicted_x = predictions[0, -1, 0].item() * self.width()
+                    predicted_y = predictions[0, -1, 1].item() * self.height()
+                    # predicted_click = predictions[0, -1, 2].item()
+                    self.predicted_cursor.cursor_pos = [
+                        predicted_x,
+                        predicted_y,
+                    ]
 
     def delay_cursor_update(self, delay_index):
         cursor_pos_list_len = len(self.cursor_pos_list)
@@ -218,6 +229,6 @@ class CursorWidget(QtWidgets.QLabel):
 
 if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
-    window = MainWindow()
+    window = MainWindow(record=False)
     window.show()
     sys.exit(app.exec())
