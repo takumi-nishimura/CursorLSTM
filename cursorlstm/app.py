@@ -28,8 +28,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.panel = QtWidgets.QWidget()
         self.setCentralWidget(self.panel)
 
-        self.button_A = ButtonWidget("Button", [100, 400], self.panel)
+        self.button_A = ButtonWidget("A", [100, 400], self.panel)
         self.button_A.button_press_signal.connect(self.recv_button_press)
+
+        self.button_B = ButtonWidget("B", [300, 400], self.panel)
+        self.button_C = ButtonWidget("C", [500, 400], self.panel)
 
         self.cursor_pos_list = []
         self.max_cursor_pos_list = 500
@@ -66,15 +69,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if not record:
             model_params = torch.load(
-                "model/cursorlstm_ubuntu_20240610_1545.pth",
+                "model/cursorlstm_ubuntu_20240610_1747.pth",
                 map_location=torch.device("mps"),
             )
             self.cursor_model = CursorLSTM(
                 2,
                 32,
                 3,
-                2,
-                30,
+                1,
+                50,
             )
             self.cursor_model.load_state_dict(model_params)
             self.cursor_model.to(self.cursor_model.device)
