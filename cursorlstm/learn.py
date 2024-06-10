@@ -43,6 +43,7 @@ class CursorLSTM(nn.Module):
             self.device = torch.device("mps")
         elif torch.cuda.is_available():
             self.device = torch.device("cuda")
+            torch.backends.cudnn.benchmark = True
         else:
             self.device = torch.device("cpu")
 
@@ -91,7 +92,7 @@ HIDDEN_SIZE = 32
 OUTPUT_SIZE = 3
 SEQ_LEN = 100
 PREDICT_LEN = 30
-NUM_LAYERS = 3
+NUM_LAYERS = 2
 NUM_EPOCHS = 300
 
 if __name__ == "__main__":
