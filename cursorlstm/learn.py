@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader, Dataset
 import datetime
 from sklearn.preprocessing import StandardScaler
+from torch.utils.tensorboard import SummaryWriter
 
 class CursorDataset(Dataset):
     def __init__(self, data, seq_len=50, predict_len=50):
@@ -78,10 +79,8 @@ def evaluate_model(model, dataloader, criterion):
             loss = criterion(outputs, y)
 
             total_loss += loss.item()
-            predictions = torch.sigmoid(outputs)
-            predicted = (predictions > 0.5).float()
             total += y.size(0)
-            correct += (predicted == y).sum().item()
+            correct += (outputs== y).sum().item()
 
         accuracy = correct / total
         loss = total_loss / len(dataloader)
@@ -93,7 +92,7 @@ HIDDEN_SIZE = 32
 OUTPUT_SIZE = 3
 SEQ_LEN = 500
 PREDICT_LEN = 50
-NUM_LAYERS = 1
+NUM_LAYERS = 2
 NUM_EPOCHS = 100
 
 if __name__ == "__main__":
