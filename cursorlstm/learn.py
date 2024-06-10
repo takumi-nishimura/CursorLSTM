@@ -18,15 +18,9 @@ class CursorDataset(Dataset):
         return len(self.data) - self.seq_len - self.predict_len + 1
 
     def __getitem__(self, idx):
-        # return (
-        #     self.data[:, 0:2][idx : idx + self.seq_len],
-        #     self.data[:,][
-        #         idx + self.seq_len : idx + self.seq_len + self.predict_len
-        #     ],
-        # )
         return (
             self.data[:, 0:2][idx : idx + self.seq_len],
-            self.data[:, 0:2][
+            self.data[:,][
                 idx + self.seq_len : idx + self.seq_len + self.predict_len
             ],
         )
@@ -94,11 +88,11 @@ def evaluate_model(model, dataloader, criterion):
 
 INPUT_SIZE = 2
 HIDDEN_SIZE = 64
-OUTPUT_SIZE = 2
+OUTPUT_SIZE = 3
 SEQ_LEN = 500
 PREDICT_LEN = 50
 NUM_LAYERS = 2
-NUM_EPOCHS = 100
+NUM_EPOCHS = 300
 
 if __name__ == "__main__":
     data = np.loadtxt("data/record_data_0608.csv", delimiter=",")
@@ -115,7 +109,7 @@ if __name__ == "__main__":
         INPUT_SIZE, HIDDEN_SIZE, OUTPUT_SIZE, NUM_LAYERS, PREDICT_LEN
     )
     model.to(model.device)
-    criterion = nn.MSELoss()
+    criterion = nn.SmoothL1Loss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     for epoch in range(NUM_EPOCHS):
