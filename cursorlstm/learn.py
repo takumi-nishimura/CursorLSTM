@@ -89,10 +89,10 @@ def evaluate_model(model, dataloader, criterion):
 INPUT_SIZE = 2
 HIDDEN_SIZE = 32
 OUTPUT_SIZE = 3
-SEQ_LEN = 200
-PREDICT_LEN = 10
+SEQ_LEN = 100
+PREDICT_LEN = 30
 NUM_LAYERS = 2
-NUM_EPOCHS = 100
+NUM_EPOCHS = 300
 
 if __name__ == "__main__":
     date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
@@ -121,7 +121,7 @@ if __name__ == "__main__":
 
     best_loss = float("inf")
     best_model = None
-    patience = 10
+    patience = 30
     counter = 0
 
     for epoch in range(NUM_EPOCHS):
