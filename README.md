@@ -1,4 +1,11 @@
 # Memo
+data
+"data/record_data_0608.csv"
+trackpad
+
+"data/record_data_0610.csv"
+mouse
+
 "model/cursorlstm_ubuntu_20240610_1545.pth"
 {
     INPUT_SIZE = 2

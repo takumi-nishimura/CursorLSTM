@@ -91,13 +91,15 @@ HIDDEN_SIZE = 32
 OUTPUT_SIZE = 3
 SEQ_LEN = 100
 PREDICT_LEN = 30
-NUM_LAYERS = 2
+NUM_LAYERS = 3
 NUM_EPOCHS = 300
 
 if __name__ == "__main__":
     date = datetime.datetime.now().strftime("%Y%m%d_%H%M")
     writer = SummaryWriter(f"runs/cursorlstm")
     data = np.loadtxt("data/record_data_0610.csv", delimiter=",")
+    _data = np.loadtxt("data/record_data_0608.csv", delimiter=",")
+    data = np.concatenate([data, _data])
     scaler = StandardScaler()
     data = scaler.fit_transform(data)
     train_data, test_data = train_test_split(
@@ -121,7 +123,7 @@ if __name__ == "__main__":
 
     best_loss = float("inf")
     best_model = None
-    patience = 30
+    patience = 10
     counter = 0
 
     for epoch in range(NUM_EPOCHS):

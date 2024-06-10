@@ -7,7 +7,6 @@ from learn import (
     OUTPUT_SIZE,
     PREDICT_LEN,
     SEQ_LEN,
-    TRAIN_RATIO,
     CursorDataset,
     CursorLSTM,
     evaluate_model,
@@ -17,7 +16,7 @@ from torch.utils.data import DataLoader, random_split
 
 data = np.loadtxt("data/record_data_0608.csv", delimiter=",")
 dataset = CursorDataset(data, SEQ_LEN, PREDICT_LEN)
-train_size = int(TRAIN_RATIO * len(dataset))
+train_size = int(0.2 * len(dataset))
 _, test_dataset = random_split(
     dataset, [train_size, len(dataset) - train_size]
 )
