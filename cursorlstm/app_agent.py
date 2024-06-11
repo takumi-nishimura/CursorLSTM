@@ -10,7 +10,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, record):
         super().__init__()
         self.setWindowTitle("Cursor LSTM")
-        self.setGeometry(0, 0, 1200, 600)
+        self.setGeometry(0, 0, 800, 600)
         self.setMouseTracking(True)
 
         self.record = record
@@ -132,13 +132,14 @@ class MainWindow(QtWidgets.QMainWindow):
             np.linalg.norm(t - start) for t in [my_target, other_target]
         ]
 
+        self.current_target_button = self.target_button
+        distance = distances[0]
+
         if distances[1] < distances[0]:
-            my_target = other_target
-            self.current_target_button = other_target_button
-            distance = distances[1]
-        else:
-            self.current_target_button = self.target_button
-            distance = distances[0]
+            if random.random() < 0.5:
+                my_target = other_target
+                self.current_target_button = other_target_button
+                distance = distances[1]
 
         duration = 1 * distance
 
