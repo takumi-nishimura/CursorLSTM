@@ -31,7 +31,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self.button_C.button_press_signal.connect(self.recv_button_press)
 
-        self.target_buttons = [self.button_A, self.button_B, self.button_C]
+        self.target_buttons = [self.button_A, self.button_B]
 
         self.realtime_cursor = CursorWidget(self.panel)
         self.realtime_cursor.cursor_pos = [self.width() / 2, self.height() / 3]
@@ -133,7 +133,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     b.move(*pos)
                     break
 
-    def generate_cursor_trajectory(self, change_probability=0.3):
+    def generate_cursor_trajectory(
+        self, change_probability=0.3, mode="minimum_jerk"
+    ):
         other_buttons = [
             button
             for button in self.target_buttons
@@ -176,15 +178,15 @@ class MainWindow(QtWidgets.QMainWindow):
                     minimum_distance_index
                 ]
 
-        return self.generate_minimal_trajectory(self.current_target_button)
+        return self.generate_trajectory(self.current_target_button, mode)
 
     def change_target_button(self):
         self.cursor_trajectory = self.generate_cursor_trajectory(
-            change_probability=1
+            change_probability=1, mode="bezier"
         )
         self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
 
-    def generate_minimal_trajectory(self, target_button):
+    def generate_trajectory(self, target_button, mode="minimum_jerk"):
         start = np.array(
             [
                 self.realtime_cursor.cursor_pos[0],
@@ -207,12 +209,20 @@ class MainWindow(QtWidgets.QMainWindow):
         t = np.linspace(0, duration, 800)
         tau = t / duration
 
-        x = start[0] + (-target[0] + start[0]) * (
-            15 * tau**4 - 6 * tau**5 - 10 * tau**3
-        )
-        y = start[1] + (-target[1] + start[1]) * (
-            15 * tau**4 - 6 * tau**5 - 10 * tau**3
-        )
+        if mode == "bezier":
+            x = start[0] + (target[0] - start[0]) * (
+                10 * tau**3 - 15 * tau**4 + 6 * tau**5
+            )
+            y = start[1] + (target[1] - start[1]) * (
+                10 * tau**3 - 15 * tau**4 + 6 * tau**5
+            )
+        else:
+            x = start[0] + (-target[0] + start[0]) * (
+                15 * tau**4 - 6 * tau**5 - 10 * tau**3
+            )
+            y = start[1] + (-target[1] + start[1]) * (
+                15 * tau**4 - 6 * tau**5 - 10 * tau**3
+            )
 
         return np.vstack((x, y)).T
 
