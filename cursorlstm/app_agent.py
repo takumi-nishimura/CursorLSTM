@@ -2,8 +2,7 @@ import random
 import sys
 
 import numpy as np
-import torch
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 
 class MainWindow(QtWidgets.QMainWindow):
