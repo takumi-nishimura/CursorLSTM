@@ -24,13 +24,15 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self.button_A.button_press_signal.connect(self.recv_button_press)
         self.button_B = ButtonWidget(
-            text="B", pos=[350, 400], parent=self.panel
+            text="B", pos=[350, 400], width=150, height=150, parent=self.panel
         )
         self.button_B.button_press_signal.connect(self.recv_button_press)
         self.button_C = ButtonWidget(
             text="C", pos=[600, 400], parent=self.panel
         )
         self.button_C.button_press_signal.connect(self.recv_button_press)
+
+        self.target_buttons = [self.button_A, self.button_B]
 
         self.realtime_cursor = CursorWidget(self.panel)
         self.realtime_cursor.cursor_pos = [self.width() / 2, self.height() / 3]
@@ -53,7 +55,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 ]
             except StopIteration:
                 self.cursor_iter = None
-                self.target_button.button_press_signal.emit()
+                self.target_button.button_press_signal.emit(self.target_button)
 
     def delay_cursor_update(self, delay_index):
         cursor_pos_list_len = len(self.cursor_pos_list)
@@ -62,10 +64,21 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             return -delay_index
 
-    def recv_button_press(self):
-        self.generate_button_pos()
-        self.cursor_trajectory = self.generate_cursor_trajectory()
-        self.cursor_iter = iter(self.cursor_trajectory)
+    def recv_button_press(self, pressed_button):
+        if pressed_button.toggle_button_state:
+            pressed_button.toggle_button_state = False
+        else:
+            pressed_button.toggle_button_state = True
+
+        if all(
+            self.target_buttons[i].toggle_button_state
+            for i in range(len(self.target_buttons))
+        ):
+            self.generate_button_pos()
+            self.cursor_trajectory = self.generate_cursor_trajectory()
+            self.cursor_iter = iter(self.cursor_trajectory)
+            for b in self.target_buttons:
+                b.toggle_button_state = False
 
     def generate_button_pos(self):
         for b in self.findChildren(ButtonWidget):
@@ -78,8 +91,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     button.geometry().intersects(
                         QtCore.QRect(
                             *pos,
-                            button.width(),
-                            button.height(),
+                            b.width(),
+                            b.height(),
                         )
                     )
                     for button in self.findChildren(ButtonWidget)
@@ -127,7 +140,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 class ButtonWidget(QtWidgets.QPushButton):
-    button_press_signal = QtCore.Signal()
+    button_press_signal = QtCore.Signal(QtWidgets.QWidget)
 
     def __init__(self, text, pos, width=100, height=100, parent=None):
         super().__init__(parent)
@@ -138,10 +151,12 @@ class ButtonWidget(QtWidgets.QPushButton):
         self.resize(self.button_width, self.button_height)
         self.move(pos[0], pos[1])
 
+        self.toggle_button_state = False
+
         self.clicked.connect(self.button_clicked)
 
     def button_clicked(self):
-        self.button_press_signal.emit()
+        self.button_press_signal.emit(self)
 
 
 class CursorWidget(QtWidgets.QLabel):
