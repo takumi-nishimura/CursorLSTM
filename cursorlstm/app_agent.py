@@ -189,6 +189,9 @@ class MainWindow(QtWidgets.QMainWindow):
             ]
         )
 
+        error = np.random.normal(0, 10, target.shape)
+        target += error
+
         distance = np.linalg.norm(target - start)
         duration = 1 * distance
 
