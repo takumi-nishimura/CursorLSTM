@@ -31,12 +31,13 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self.button_C.button_press_signal.connect(self.recv_button_press)
 
-        self.target_buttons = [self.button_A, self.button_B]
+        self.target_buttons = [self.button_A, self.button_B, self.button_C]
 
         self.realtime_cursor = CursorWidget(self.panel)
         self.realtime_cursor.cursor_pos = [self.width() / 2, self.height() / 3]
 
         self.target_button = self.button_A
+        self.change_target_flag = False
         self.current_target_button = self.target_button
         self.cursor_trajectory = self.generate_cursor_trajectory()
         self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
@@ -53,6 +54,12 @@ class MainWindow(QtWidgets.QMainWindow):
                     next_cursor_pos[0],
                     next_cursor_pos[1],
                 ]
+
+                progress = i / len(self.cursor_trajectory)
+                if self.change_target_flag:
+                    if progress > self.change_target_flag:
+                        self.change_target_flag = False
+                        self.change_target_button()
 
             except StopIteration:
                 self.cursor_iter = None
@@ -96,8 +103,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         if all(button.isChecked() for button in self.target_buttons):
             self.generate_button_pos()
+            self.current_target_button = self.target_button
             self.cursor_trajectory = self.generate_cursor_trajectory()
             self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
+            if random.random() < 0.3:
+                self.change_target_flag = random.uniform(0.1, 0.6)
             [
                 button.setChecked(False)
                 for button in self.findChildren(ButtonWidget)
@@ -123,8 +133,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     b.move(*pos)
                     break
 
-    def generate_cursor_trajectory(self):
-        self.current_target_button = self.target_button
+    def generate_cursor_trajectory(self, change_probability=0.3):
         other_buttons = [
             button
             for button in self.target_buttons
@@ -162,7 +171,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         minimum_distance_index = np.argmin(others_distance)
         if others_distance[minimum_distance_index] < target_distance:
-            if random.random() < 0.8:
+            if random.random() < change_probability:
                 self.current_target_button = other_buttons[
                     minimum_distance_index
                 ]
@@ -170,8 +179,8 @@ class MainWindow(QtWidgets.QMainWindow):
         return self.generate_minimal_trajectory(self.current_target_button)
 
     def change_target_button(self):
-        self.cursor_trajectory = self.generate_minimal_trajectory(
-            self.current_target_button
+        self.cursor_trajectory = self.generate_cursor_trajectory(
+            change_probability=1
         )
         self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
 
