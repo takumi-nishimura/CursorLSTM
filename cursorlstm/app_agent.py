@@ -39,7 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.target_button = self.button_A
         self.current_target_button = self.target_button
         self.cursor_trajectory = self.generate_cursor_trajectory()
-        self.cursor_iter = iter(self.cursor_trajectory)
+        self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
 
         self.main_timer = QtCore.QTimer()
         self.main_timer.timeout.connect(self.update)
@@ -48,39 +48,60 @@ class MainWindow(QtWidgets.QMainWindow):
     def update(self):
         if self.cursor_iter is not None:
             try:
-                next_cursor_pos = next(self.cursor_iter)
+                i, next_cursor_pos = next(self.cursor_iter)
                 self.realtime_cursor.cursor_pos = [
                     next_cursor_pos[0],
                     next_cursor_pos[1],
                 ]
+
             except StopIteration:
                 self.cursor_iter = None
-                self.current_target_button.button_press_signal.emit(
-                    self.current_target_button
-                )
+                if (
+                    self.calc_overlap_area(
+                        self.current_target_button, self.realtime_cursor
+                    )
+                    > 0
+                ):
+                    self.current_target_button.button_press_signal.emit(
+                        self.current_target_button
+                    )
 
-    def delay_cursor_update(self, delay_index):
-        cursor_pos_list_len = len(self.cursor_pos_list)
-        if cursor_pos_list_len < delay_index:
-            return -cursor_pos_list_len
+    def calc_overlap_area(self, button, cursor):
+        button_area = button.geometry()
+        button_x1, button_y1 = button_area.x(), button_area.y()
+        button_x2, button_y2 = (
+            button_x1 + button_area.width(),
+            button_y1 + button_area.height(),
+        )
+
+        cursor_area = cursor.geometry()
+        cursor_x1, cursor_y1 = cursor_area.x(), cursor_area.y()
+        cursor_x2, cursor_y2 = (
+            cursor_x1 + cursor_area.width(),
+            cursor_y1 + cursor_area.height(),
+        )
+
+        overlap_x1 = max(button_x1, cursor_x1)
+        overlap_y1 = max(button_y1, cursor_y1)
+        overlap_x2 = min(button_x2, cursor_x2)
+        overlap_y2 = min(button_y2, cursor_y2)
+
+        if overlap_x1 < overlap_x2 and overlap_y1 < overlap_y2:
+            return (overlap_x2 - overlap_x1) * (overlap_y2 - overlap_y1)
         else:
-            return -delay_index
+            return 0
 
     def recv_button_press(self, pressed_button):
-        if pressed_button.toggle_button_state:
-            pressed_button.toggle_button_state = False
-        else:
-            pressed_button.toggle_button_state = True
+        pressed_button.setChecked(True)
 
-        if all(
-            self.target_buttons[i].toggle_button_state
-            for i in range(len(self.target_buttons))
-        ):
+        if all(button.isChecked() for button in self.target_buttons):
             self.generate_button_pos()
             self.cursor_trajectory = self.generate_cursor_trajectory()
-            self.cursor_iter = iter(self.cursor_trajectory)
-            for b in self.target_buttons:
-                b.toggle_button_state = False
+            self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
+            [
+                button.setChecked(False)
+                for button in self.findChildren(ButtonWidget)
+            ]
 
     def generate_button_pos(self):
         for b in self.findChildren(ButtonWidget):
@@ -103,57 +124,92 @@ class MainWindow(QtWidgets.QMainWindow):
                     break
 
     def generate_cursor_trajectory(self):
-        distances = []
-        other_target_button = [
-            b for b in self.target_buttons if b != self.target_button
-        ][0]
+        self.current_target_button = self.target_button
+        other_buttons = [
+            button
+            for button in self.target_buttons
+            if button != self.current_target_button
+        ]
 
-        my_target = np.array(
+        start_pos = np.array(
             [
-                self.target_button.x() + self.target_button.width() / 2,
-                self.target_button.y() + self.target_button.height() / 2,
+                self.realtime_cursor.cursor_pos[0],
+                self.realtime_cursor.cursor_pos[1],
             ]
         )
-        other_target = np.array(
+        target_pos = np.array(
             [
-                other_target_button.x() + other_target_button.width() / 2,
-                other_target_button.y() + other_target_button.height() / 2,
+                self.current_target_button.x()
+                + self.current_target_button.width() / 2,
+                self.current_target_button.y()
+                + self.current_target_button.height() / 2,
             ]
         )
+        others_pos = [
+            np.array(
+                [
+                    button.x() + button.width() / 2,
+                    button.y() + button.height() / 2,
+                ]
+            )
+            for button in other_buttons
+        ]
+
+        target_distance = np.linalg.norm(target_pos - start_pos)
+        others_distance = [
+            np.linalg.norm(other_pos - start_pos) for other_pos in others_pos
+        ]
+
+        minimum_distance_index = np.argmin(others_distance)
+        if others_distance[minimum_distance_index] < target_distance:
+            if random.random() < 0.8:
+                self.current_target_button = other_buttons[
+                    minimum_distance_index
+                ]
+
+        return self.generate_minimal_trajectory(self.current_target_button)
+
+    def change_target_button(self):
+        self.cursor_trajectory = self.generate_minimal_trajectory(
+            self.current_target_button
+        )
+        self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
+
+    def generate_minimal_trajectory(self, target_button):
         start = np.array(
             [
                 self.realtime_cursor.cursor_pos[0],
                 self.realtime_cursor.cursor_pos[1],
             ]
         )
+        target = np.array(
+            [
+                target_button.x() + target_button.width() / 2,
+                target_button.y() + target_button.height() / 2,
+            ]
+        )
 
-        distances = [
-            np.linalg.norm(t - start) for t in [my_target, other_target]
-        ]
-
-        self.current_target_button = self.target_button
-        distance = distances[0]
-
-        if distances[1] < distances[0]:
-            if random.random() < 0.5:
-                my_target = other_target
-                self.current_target_button = other_target_button
-                distance = distances[1]
-
+        distance = np.linalg.norm(target - start)
         duration = 1 * distance
 
         t = np.linspace(0, duration, 800)
         tau = t / duration
 
-        x = start[0] + (-my_target[0] + start[0]) * (
+        x = start[0] + (-target[0] + start[0]) * (
             15 * tau**4 - 6 * tau**5 - 10 * tau**3
         )
-        y = start[1] + (-my_target[1] + start[1]) * (
+        y = start[1] + (-target[1] + start[1]) * (
             15 * tau**4 - 6 * tau**5 - 10 * tau**3
         )
 
-        trajectory = np.vstack((x, y)).T
-        return trajectory
+        return np.vstack((x, y)).T
+
+    def delay_cursor_update(self, delay_index):
+        cursor_pos_list_len = len(self.cursor_pos_list)
+        if cursor_pos_list_len < delay_index:
+            return -cursor_pos_list_len
+        else:
+            return -delay_index
 
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Q:
@@ -175,8 +231,7 @@ class ButtonWidget(QtWidgets.QPushButton):
         self.setText(text)
         self.resize(self.button_width, self.button_height)
         self.move(pos[0], pos[1])
-
-        self.toggle_button_state = False
+        self.setCheckable(True)
 
         self.clicked.connect(self.button_clicked)
 
