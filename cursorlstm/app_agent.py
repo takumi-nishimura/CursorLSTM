@@ -19,11 +19,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.panel = QtWidgets.QWidget()
         self.setCentralWidget(self.panel)
 
-        self.button_A = ButtonWidget("A", [100, 400], self.panel)
+        self.button_A = ButtonWidget(
+            text="A", pos=[100, 400], width=50, height=50, parent=self.panel
+        )
         self.button_A.button_press_signal.connect(self.recv_button_press)
-        self.button_B = ButtonWidget("B", [350, 400], self.panel)
+        self.button_B = ButtonWidget(
+            text="B", pos=[350, 400], parent=self.panel
+        )
         self.button_B.button_press_signal.connect(self.recv_button_press)
-        self.button_C = ButtonWidget("C", [600, 400], self.panel)
+        self.button_C = ButtonWidget(
+            text="C", pos=[600, 400], parent=self.panel
+        )
         self.button_C.button_press_signal.connect(self.recv_button_press)
 
         self.realtime_cursor = CursorWidget(self.panel)
@@ -65,12 +71,16 @@ class MainWindow(QtWidgets.QMainWindow):
         for b in self.findChildren(ButtonWidget):
             while True:
                 pos = [
-                    random.randint(0, self.width() - 100),
-                    random.randint(0, self.height() - 100),
+                    random.randint(0, self.width() - b.width()),
+                    random.randint(0, self.height() - b.height()),
                 ]
                 if not any(
                     button.geometry().intersects(
-                        QtCore.QRect(*pos, 100 + 10, 100 + 10)
+                        QtCore.QRect(
+                            *pos,
+                            button.width(),
+                            button.height(),
+                        )
                     )
                     for button in self.findChildren(ButtonWidget)
                 ):
@@ -79,7 +89,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def generate_cursor_trajectory(self):
         target = np.array(
-            [self.target_button.x() + 50, self.target_button.y() + 50]
+            [
+                self.target_button.x() + self.target_button.width() / 2,
+                self.target_button.y() + self.target_button.height() / 2,
+            ]
         )
         start = np.array(
             [
@@ -116,12 +129,13 @@ class MainWindow(QtWidgets.QMainWindow):
 class ButtonWidget(QtWidgets.QPushButton):
     button_press_signal = QtCore.Signal()
 
-    def __init__(self, text, pos, parent=None):
+    def __init__(self, text, pos, width=100, height=100, parent=None):
         super().__init__(parent)
         self.parent_widget = parent
-        self.button_size = 100
+        self.button_width = width
+        self.button_height = height
         self.setText(text)
-        self.resize(self.button_size, self.button_size)
+        self.resize(self.button_width, self.button_height)
         self.move(pos[0], pos[1])
 
         self.clicked.connect(self.button_clicked)
