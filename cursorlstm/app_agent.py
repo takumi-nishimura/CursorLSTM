@@ -37,6 +37,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.realtime_cursor.cursor_pos = [self.width() / 2, self.height() / 3]
 
         self.target_button = self.button_A
+        self.speed_bias = 1.5
         self.change_target_flag = False
         self.current_target_button = self.target_button
         self.cursor_trajectory = self.generate_cursor_trajectory()
@@ -206,7 +207,7 @@ class MainWindow(QtWidgets.QMainWindow):
         distance = np.linalg.norm(target - start)
         duration = 1 * distance
 
-        t = np.linspace(0, duration, 800)
+        t = np.linspace(0, duration, int(800 / self.speed_bias))
         tau = t / duration
 
         if mode == "bezier":
