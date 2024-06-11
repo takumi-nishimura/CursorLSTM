@@ -10,7 +10,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, record):
         super().__init__()
         self.setWindowTitle("Cursor LSTM")
-        self.setGeometry(0, 0, 800, 600)
+        self.setGeometry(0, 0, 1200, 600)
         self.setMouseTracking(True)
 
         self.record = record
@@ -38,6 +38,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.realtime_cursor.cursor_pos = [self.width() / 2, self.height() / 3]
 
         self.target_button = self.button_A
+        self.current_target_button = self.target_button
         self.cursor_trajectory = self.generate_cursor_trajectory()
         self.cursor_iter = iter(self.cursor_trajectory)
 
@@ -55,7 +56,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 ]
             except StopIteration:
                 self.cursor_iter = None
-                self.target_button.button_press_signal.emit(self.target_button)
+                self.current_target_button.button_press_signal.emit(
+                    self.current_target_button
+                )
 
     def delay_cursor_update(self, delay_index):
         cursor_pos_list_len = len(self.cursor_pos_list)
@@ -101,10 +104,21 @@ class MainWindow(QtWidgets.QMainWindow):
                     break
 
     def generate_cursor_trajectory(self):
-        target = np.array(
+        distances = []
+        other_target_button = [
+            b for b in self.target_buttons if b != self.target_button
+        ][0]
+
+        my_target = np.array(
             [
                 self.target_button.x() + self.target_button.width() / 2,
                 self.target_button.y() + self.target_button.height() / 2,
+            ]
+        )
+        other_target = np.array(
+            [
+                other_target_button.x() + other_target_button.width() / 2,
+                other_target_button.y() + other_target_button.height() / 2,
             ]
         )
         start = np.array(
@@ -114,16 +128,27 @@ class MainWindow(QtWidgets.QMainWindow):
             ]
         )
 
-        distance = np.linalg.norm(target - start)
+        distances = [
+            np.linalg.norm(t - start) for t in [my_target, other_target]
+        ]
+
+        if distances[1] < distances[0]:
+            my_target = other_target
+            self.current_target_button = other_target_button
+            distance = distances[1]
+        else:
+            self.current_target_button = self.target_button
+            distance = distances[0]
+
         duration = 1 * distance
 
-        t = np.linspace(0, duration, 500)
+        t = np.linspace(0, duration, 800)
         tau = t / duration
 
-        x = start[0] + (-target[0] + start[0]) * (
+        x = start[0] + (-my_target[0] + start[0]) * (
             15 * tau**4 - 6 * tau**5 - 10 * tau**3
         )
-        y = start[1] + (-target[1] + start[1]) * (
+        y = start[1] + (-my_target[1] + start[1]) * (
             15 * tau**4 - 6 * tau**5 - 10 * tau**3
         )
 
