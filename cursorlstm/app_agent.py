@@ -70,6 +70,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     )
                     > 0
                 ):
+                    self.realtime_cursor.cursor_clicked = True
                     self.current_target_button.button_press_signal.emit(
                         self.current_target_button
                     )
@@ -102,6 +103,17 @@ class MainWindow(QtWidgets.QMainWindow):
     def recv_button_press(self, pressed_button):
         pressed_button.setChecked(True)
 
+        if (
+            self.current_target_button.isChecked()
+            and not self.realtime_cursor.cursor_clicked
+        ):
+            self.current_target_button = [
+                button
+                for button in self.target_buttons
+                if not button.isChecked()
+            ][0]
+            self.change_target_button()
+
         if all(button.isChecked() for button in self.target_buttons):
             self.generate_button_pos()
             self.current_target_button = self.target_button
@@ -109,13 +121,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.cursor_iter = enumerate(iter(self.cursor_trajectory), start=1)
             if random.random() < 0.3:
                 self.change_target_flag = random.uniform(0.1, 0.6)
-            [
-                button.setChecked(False)
-                for button in self.findChildren(ButtonWidget)
-            ]
 
     def generate_button_pos(self):
+        self.realtime_cursor.cursor_clicked = False
         for b in self.findChildren(ButtonWidget):
+            b.setChecked(False)
             while True:
                 pos = [
                     random.randint(0, self.width() - b.width()),
@@ -140,7 +150,7 @@ class MainWindow(QtWidgets.QMainWindow):
         other_buttons = [
             button
             for button in self.target_buttons
-            if button != self.current_target_button
+            if button != self.current_target_button and not button.isChecked()
         ]
 
         start_pos = np.array(
@@ -172,12 +182,13 @@ class MainWindow(QtWidgets.QMainWindow):
             np.linalg.norm(other_pos - start_pos) for other_pos in others_pos
         ]
 
-        minimum_distance_index = np.argmin(others_distance)
-        if others_distance[minimum_distance_index] < target_distance:
-            if random.random() < change_probability:
-                self.current_target_button = other_buttons[
-                    minimum_distance_index
-                ]
+        if len(others_distance) > 0:
+            minimum_distance_index = np.argmin(others_distance)
+            if others_distance[minimum_distance_index] < target_distance:
+                if random.random() < change_probability:
+                    self.current_target_button = other_buttons[
+                        minimum_distance_index
+                    ]
 
         return self.generate_trajectory(self.current_target_button, mode)
 
@@ -207,7 +218,7 @@ class MainWindow(QtWidgets.QMainWindow):
         distance = np.linalg.norm(target - start)
         duration = 1 * distance
 
-        t = np.linspace(0, duration, int(800 / self.speed_bias))
+        t = np.linspace(0, duration, int(1000 / self.speed_bias))
         tau = t / duration
 
         if mode == "bezier":
@@ -267,6 +278,7 @@ class CursorWidget(QtWidgets.QLabel):
         super().__init__(parent)
         self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents, True)
 
+        self.cursor_clicked = False
         self.cursor_pos = [0, 0]
         self.delay_index = 0
         self.cursor_size = 20
