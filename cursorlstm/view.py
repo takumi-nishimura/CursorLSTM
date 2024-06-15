@@ -63,7 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
             _state = self.check_pair(button)
             button.move(_state.x, _state.y)
 
-        self.agent_cursor_widget.move(
+        self.agent_cursor_widget.cursorMove(
             self.env.agent_cursor.center_x, self.env.agent_cursor.center_y
         )
 
@@ -118,7 +118,13 @@ class CursorWidget(QtWidgets.QLabel):
                 self.cursor_size / 2,
             )
         )
-        self.move(self.center_pos[0], self.center_pos[1])
+        self.cursorMove(pos[0], pos[1])
+
+    def cursorMove(self, x, y):
+        self.move(
+            x - self.cursor_size / 2,
+            y - self.cursor_size / 2,
+        )
 
 
 if __name__ == "__main__":

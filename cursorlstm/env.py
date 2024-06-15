@@ -14,7 +14,7 @@ class TaskEnv:
         self.main_geometry = MainGeometry(0, 0, 800, 600)
 
         self.button_A = ButtonState(name="A", size=(50, 50))
-        self.button_B = ButtonState(name="B", size=(300, 300))
+        self.button_B = ButtonState(name="B", size=(150, 150))
         self.button_C = ButtonState(name="C", size=(100, 100))
 
         self.agent_cursor = CursorState(
@@ -23,7 +23,7 @@ class TaskEnv:
         )
         self.operator_cursor = CursorState(name="operator", pos=(50, 50))
 
-        self.target_buttons = [self.button_A, self.button_B]
+        self.target_buttons = [self.button_A, self.button_B, self.button_C]
         self.agent_cursor.target_button = self.button_A
 
         self.init_env()
@@ -40,19 +40,51 @@ class TaskEnv:
         self.agent_cursor.trajectory_iter = self.make_iter(
             self.agent_cursor.trajectory
         )
+        if random.random() < 0.3:
+            self.agent_cursor.target_change = random.uniform(0.1, 0.6)
 
     def step(self):
-        logger.info(
-            f"{self.agent_cursor.center_x},{self.agent_cursor.center_y}"
-        )
-
         if self.agent_cursor.trajectory_iter is not None:
             try:
                 idx, pos = next(self.agent_cursor.trajectory_iter)
                 self.agent_cursor.setPos(pos)
+
+                progress = idx / len(self.agent_cursor.trajectory)
+                if self.agent_cursor.target_change:
+                    if progress > self.agent_cursor.target_change:
+                        self.agent_cursor.target_change = False
+                        self.change_target_button(self.agent_cursor)
+
             except StopIteration:
                 self.agent_cursor.trajectory_iter = None
                 self.agent_cursor.setClick(True)
+
+        if self.agent_cursor.click:
+            if self.judge_overlap_cursor(
+                self.agent_cursor, self.agent_cursor.current_target_button
+            ):
+                self.agent_cursor.current_target_button.setChecked(True)
+            else:
+                self.agent_cursor.trajectory = self.plan_cursor_target(
+                    self.agent_cursor, change_probability=1, mode="bezier"
+                )
+                self.agent_cursor.trajectory_iter = self.make_iter(
+                    self.agent_cursor.trajectory
+                )
+
+        if all(button.isChecked() for button in self.target_buttons):
+            self.change_button_pos()
+            self.agent_cursor.current_target_button = (
+                self.agent_cursor.target_button
+            )
+            self.agent_cursor.trajectory = self.plan_cursor_target(
+                self.agent_cursor
+            )
+            self.agent_cursor.trajectory_iter = self.make_iter(
+                self.agent_cursor.trajectory
+            )
+            if random.random() < 0.3:
+                self.agent_cursor.target_change = random.uniform(0.1, 0.6)
 
         self.agent_cursor.setClick(False)
 
@@ -115,6 +147,23 @@ class TaskEnv:
         if overlap_x1 < overlap_x2 and overlap_y1 < overlap_y2:
             return (overlap_x2 - overlap_x1) * (overlap_y2 - overlap_y1)
         return 0
+
+    def judge_overlap_cursor(self, cursor, button):
+        if button.x < cursor.center_x < button.x + button.width:
+            if button.y < cursor.center_y < button.y + button.height:
+                return True
+        return False
+
+    def change_target_button(self, cursor):
+        _before_target = cursor.current_target_button
+        cursor.trajectory = self.plan_cursor_target(
+            cursor, change_probability=1, mode="bezier"
+        )
+        if cursor.current_target_button != _before_target:
+            cursor.trajectory_iter = self.make_iter(cursor.trajectory)
+            logger.info(
+                f"Change target from {_before_target.name} to {cursor.current_target_button.name}"
+            )
 
     def plan_cursor_target(
         self, cursor, change_probability=0.3, mode="minimum_jerk"
@@ -238,6 +287,8 @@ class ButtonState(metaclass=ButtonInstanceTracker):
 
     def setChecked(self, check: bool):
         self.checked = check
+        if check:
+            logger.info(f"{self.name} checked")
 
     def setPos(self, pos: tuple):
         self.x = pos[0]
@@ -253,6 +304,11 @@ class CursorState:
         self.size = 20
         self.center_x = pos[0]
         self.center_y = pos[1]
+        self.width = self.size / 2
+        self.height = self.size / 2
+        self.x = self.center_x - self.width
+        self.y = self.center_y - self.height
+        self.width = self.size / 2
         self.click = False
 
         self.target_button = None
@@ -264,9 +320,13 @@ class CursorState:
     def setPos(self, pos: tuple):
         self.center_x = pos[0]
         self.center_y = pos[1]
+        self.x = self.center_x - self.width
+        self.y = self.center_y - self.height
 
     def setClick(self, click: bool):
         self.click = click
+        if self.click:
+            logger.info(f"{self.name} clicked")
 
 
 if __name__ == "__main__":
