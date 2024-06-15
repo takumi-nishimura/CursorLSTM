@@ -25,15 +25,28 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(self.panel)
 
         self.button_state_list = self.env.getButtonStates()
-        self.button_widgets = [
-            ButtonWidget(
-                name=button_state.name,
-                pos=(button_state.x, button_state.y),
-                size=(button_state.width, button_state.height),
-                parent=self.panel,
+        self.button_widgets = []
+        for button_state in self.button_state_list:
+            self.button_widgets.append(
+                ButtonWidget(
+                    name=button_state.name,
+                    pos=(button_state.x, button_state.y),
+                    size=(button_state.width, button_state.height),
+                    parent=self.panel,
+                )
             )
-            for button_state in self.button_state_list
-        ]
+            self.button_widgets[-1].button_press_signal.connect(
+                self.setButtonChecked
+            )
+        # self.button_widgets = [
+        #     ButtonWidget(
+        #         name=button_state.name,
+        #         pos=(button_state.x, button_state.y),
+        #         size=(button_state.width, button_state.height),
+        #         parent=self.panel,
+        #     )
+        #     for button_state in self.button_state_list
+        # ]
 
         self.agent_cursor_widget = CursorWidget(
             name=self.env.agent_cursor.name,
@@ -62,6 +75,7 @@ class MainWindow(QtWidgets.QMainWindow):
         for button in self.button_widgets:
             _state = self.check_pair(button)
             button.move(_state.x, _state.y)
+            button.setChecked(_state.checked)
 
         self.agent_cursor_widget.cursorMove(
             self.env.agent_cursor.center_x, self.env.agent_cursor.center_y
@@ -73,12 +87,18 @@ class MainWindow(QtWidgets.QMainWindow):
             if widget.text() == state.name:
                 return state
 
+    def setButtonChecked(self, widget):
+        _state = self.check_pair(widget)
+        _state.checked = True
+
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Q:
             self.close()
 
 
 class ButtonWidget(QtWidgets.QPushButton):
+    button_press_signal = QtCore.Signal(QtWidgets.QWidget)
+
     def __init__(self, name, pos, size, parent):
         super().__init__(parent)
 
@@ -86,6 +106,11 @@ class ButtonWidget(QtWidgets.QPushButton):
         self.move(pos[0], pos[1])
         self.resize(size[0], size[1])
         self.setCheckable(True)
+
+        self.clicked.connect(self.setButtonChecked)
+
+    def setButtonChecked(self):
+        self.button_press_signal.emit(self)
 
 
 class CursorWidget(QtWidgets.QLabel):
