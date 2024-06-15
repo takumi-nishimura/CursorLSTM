@@ -71,6 +71,20 @@ class TaskEnv:
                 self.agent_cursor.trajectory_iter = self.make_iter(
                     self.agent_cursor.trajectory
                 )
+        else:
+            if self.agent_cursor.current_target_button.isChecked():
+                other_target_buttons = [
+                    button
+                    for button in self.target_buttons
+                    if not button.isChecked()
+                ]
+                if len(other_target_buttons) > 0:
+                    self.agent_cursor.current_target_button = [
+                        button
+                        for button in self.target_buttons
+                        if not button.isChecked()
+                    ][0]
+                    self.change_target_button(self.agent_cursor)
 
         if all(button.isChecked() for button in self.target_buttons):
             self.change_button_pos()
