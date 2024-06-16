@@ -2,8 +2,7 @@ import sys
 import threading
 
 from env import TaskEnv
-from logger import logger
-from PySide6 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtWidgets
 
 
 class MainWindow(QtWidgets.QMainWindow):

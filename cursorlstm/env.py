@@ -63,6 +63,7 @@ class TaskEnv:
             if self.judge_overlap_cursor(
                 self.agent_cursor, self.agent_cursor.current_target_button
             ):
+                self.agent_cursor.success_click_cnt += 1
                 self.agent_cursor.current_target_button.setChecked(True)
             else:
                 self.agent_cursor.trajectory = self.plan_cursor_target(
@@ -72,7 +73,10 @@ class TaskEnv:
                     self.agent_cursor.trajectory
                 )
         else:
-            if self.agent_cursor.current_target_button.isChecked():
+            if (
+                self.agent_cursor.current_target_button.isChecked()
+                and self.agent_cursor.success_click_cnt == 0
+            ):
                 other_target_buttons = [
                     button
                     for button in self.target_buttons
@@ -88,6 +92,7 @@ class TaskEnv:
 
         if all(button.isChecked() for button in self.target_buttons):
             self.change_button_pos()
+            self.agent_cursor.success_click_cnt = 0
             self.agent_cursor.current_target_button = (
                 self.agent_cursor.target_button
             )
@@ -240,7 +245,7 @@ class TaskEnv:
 
         duration = np.linalg.norm(target - start)
 
-        t = np.linspace(0, duration, 100)
+        t = np.linspace(0, duration, 300)
         tau = t / duration
 
         if mode == "bezier":
@@ -324,6 +329,7 @@ class CursorState:
         self.y = self.center_y - self.height
         self.width = self.size / 2
         self.click = False
+        self.success_click_cnt = 0
 
         self.target_button = None
         self.current_target_button = None
