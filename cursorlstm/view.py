@@ -37,15 +37,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.button_widgets[-1].button_press_signal.connect(
                 self.setButtonChecked
             )
-        # self.button_widgets = [
-        #     ButtonWidget(
-        #         name=button_state.name,
-        #         pos=(button_state.x, button_state.y),
-        #         size=(button_state.width, button_state.height),
-        #         parent=self.panel,
-        #     )
-        #     for button_state in self.button_state_list
-        # ]
 
         self.agent_cursor_widget = CursorWidget(
             name=self.env.agent_cursor.name,

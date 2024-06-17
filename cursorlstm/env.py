@@ -88,7 +88,12 @@ class TaskEnv:
                         for button in self.target_buttons
                         if not button.isChecked()
                     ][0]
-                    self.change_target_button(self.agent_cursor)
+                    self.agent_cursor.trajectory = self.plan_cursor_target(
+                        self.agent_cursor, change_probability=1, mode="bezier"
+                    )
+                    self.agent_cursor.trajectory_iter = self.make_iter(
+                        self.agent_cursor.trajectory
+                    )
 
         if all(button.isChecked() for button in self.target_buttons):
             self.change_button_pos()
@@ -245,7 +250,7 @@ class TaskEnv:
 
         duration = np.linalg.norm(target - start)
 
-        t = np.linspace(0, duration, 300)
+        t = np.linspace(0, duration, 200)
         tau = t / duration
 
         if mode == "bezier":
