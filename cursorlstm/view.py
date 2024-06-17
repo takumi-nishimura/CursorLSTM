@@ -38,11 +38,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.setButtonChecked
             )
 
-        self.agent_cursor_widget = CursorWidget(
-            name=self.env.agent_cursor.name,
+        self.operator_cursor_widget = CursorWidget(
+            name=self.env.operator_cursor.name,
             pos=(
-                self.env.agent_cursor.center_x,
-                self.env.agent_cursor.center_y,
+                self.env.operator_cursor.center_x,
+                self.env.operator_cursor.center_y,
             ),
             color=(0, 0, 255),
             parent=self.panel,
@@ -67,8 +67,8 @@ class MainWindow(QtWidgets.QMainWindow):
             button.move(_state.x, _state.y)
             button.setChecked(_state.checked)
 
-        self.agent_cursor_widget.cursorMove(
-            self.env.agent_cursor.center_x, self.env.agent_cursor.center_y
+        self.operator_cursor_widget.cursorMove(
+            self.env.operator_cursor.center_x, self.env.operator_cursor.center_y
         )
 
     def check_pair(self, widget):

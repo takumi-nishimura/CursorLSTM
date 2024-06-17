@@ -24,58 +24,58 @@ class TaskEnv:
         self.operator_cursor = CursorState(name="operator", pos=(50, 50))
 
         self.target_buttons = [self.button_A, self.button_B, self.button_C]
-        self.agent_cursor.target_button = self.button_A
+        self.operator_cursor.target_button = self.button_A
 
         self.init_env()
 
     def init_env(self):
         self.change_button_pos()
-        self.agent_cursor.current_target_button = (
-            self.agent_cursor.target_button
+        self.operator_cursor.current_target_button = (
+            self.operator_cursor.target_button
         )
 
-        self.agent_cursor.trajectory = self.plan_cursor_target(
-            self.agent_cursor
+        self.operator_cursor.trajectory = self.plan_cursor_target(
+            self.operator_cursor
         )
-        self.agent_cursor.trajectory_iter = self.make_iter(
-            self.agent_cursor.trajectory
+        self.operator_cursor.trajectory_iter = self.make_iter(
+            self.operator_cursor.trajectory
         )
         if random.random() < 0.3:
-            self.agent_cursor.target_change = random.uniform(0.1, 0.6)
+            self.operator_cursor.target_change = random.uniform(0.1, 0.6)
 
     def step(self):
-        if self.agent_cursor.trajectory_iter is not None:
+        if self.operator_cursor.trajectory_iter is not None:
             try:
-                idx, pos = next(self.agent_cursor.trajectory_iter)
-                self.agent_cursor.setPos(pos)
+                idx, pos = next(self.operator_cursor.trajectory_iter)
+                self.operator_cursor.setPos(pos)
 
-                progress = idx / len(self.agent_cursor.trajectory)
-                if self.agent_cursor.target_change:
-                    if progress > self.agent_cursor.target_change:
-                        self.agent_cursor.target_change = False
-                        self.change_target_button(self.agent_cursor)
+                progress = idx / len(self.operator_cursor.trajectory)
+                if self.operator_cursor.target_change:
+                    if progress > self.operator_cursor.target_change:
+                        self.operator_cursor.target_change = False
+                        self.change_target_button(self.operator_cursor)
 
             except StopIteration:
-                self.agent_cursor.trajectory_iter = None
-                self.agent_cursor.setClick(True)
+                self.operator_cursor.trajectory_iter = None
+                self.operator_cursor.setClick(True)
 
-        if self.agent_cursor.click:
+        if self.operator_cursor.click:
             if self.judge_overlap_cursor(
-                self.agent_cursor, self.agent_cursor.current_target_button
+                self.operator_cursor, self.operator_cursor.current_target_button
             ):
-                self.agent_cursor.success_click_cnt += 1
-                self.agent_cursor.current_target_button.setChecked(True)
+                self.operator_cursor.success_click_cnt += 1
+                self.operator_cursor.current_target_button.setChecked(True)
             else:
-                self.agent_cursor.trajectory = self.plan_cursor_target(
-                    self.agent_cursor, change_probability=1, mode="bezier"
+                self.operator_cursor.trajectory = self.plan_cursor_target(
+                    self.operator_cursor, change_probability=1, mode="bezier"
                 )
-                self.agent_cursor.trajectory_iter = self.make_iter(
-                    self.agent_cursor.trajectory
+                self.operator_cursor.trajectory_iter = self.make_iter(
+                    self.operator_cursor.trajectory
                 )
         else:
             if (
-                self.agent_cursor.current_target_button.isChecked()
-                and self.agent_cursor.success_click_cnt == 0
+                self.operator_cursor.current_target_button.isChecked()
+                and self.operator_cursor.success_click_cnt == 0
             ):
                 other_target_buttons = [
                     button
@@ -83,34 +83,34 @@ class TaskEnv:
                     if not button.isChecked()
                 ]
                 if len(other_target_buttons) > 0:
-                    self.agent_cursor.current_target_button = [
+                    self.operator_cursor.current_target_button = [
                         button
                         for button in self.target_buttons
                         if not button.isChecked()
                     ][0]
-                    self.agent_cursor.trajectory = self.plan_cursor_target(
-                        self.agent_cursor, change_probability=1, mode="bezier"
+                    self.operator_cursor.trajectory = self.plan_cursor_target(
+                        self.operator_cursor, change_probability=1, mode="bezier"
                     )
-                    self.agent_cursor.trajectory_iter = self.make_iter(
-                        self.agent_cursor.trajectory
+                    self.operator_cursor.trajectory_iter = self.make_iter(
+                        self.operator_cursor.trajectory
                     )
 
         if all(button.isChecked() for button in self.target_buttons):
             self.change_button_pos()
-            self.agent_cursor.success_click_cnt = 0
-            self.agent_cursor.current_target_button = (
-                self.agent_cursor.target_button
+            self.operator_cursor.success_click_cnt = 0
+            self.operator_cursor.current_target_button = (
+                self.operator_cursor.target_button
             )
-            self.agent_cursor.trajectory = self.plan_cursor_target(
-                self.agent_cursor
+            self.operator_cursor.trajectory = self.plan_cursor_target(
+                self.operator_cursor
             )
-            self.agent_cursor.trajectory_iter = self.make_iter(
-                self.agent_cursor.trajectory
+            self.operator_cursor.trajectory_iter = self.make_iter(
+                self.operator_cursor.trajectory
             )
             if random.random() < 0.3:
-                self.agent_cursor.target_change = random.uniform(0.1, 0.6)
+                self.operator_cursor.target_change = random.uniform(0.1, 0.6)
 
-        self.agent_cursor.setClick(False)
+        self.operator_cursor.setClick(False)
 
     def loop(self):
         while True:
