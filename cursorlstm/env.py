@@ -17,14 +17,15 @@ class TaskEnv:
         self.button_B = ButtonState(name="B", size=(150, 150))
         self.button_C = ButtonState(name="C", size=(100, 100))
 
+        self.operator_cursor = CursorState(name="operator", pos=(50, 50))
         self.agent_cursor = CursorState(
             name="agent",
-            pos=(self.main_geometry.width / 2, self.main_geometry.height / 3),
+            pos=(10, 10),
         )
-        self.operator_cursor = CursorState(name="operator", pos=(50, 50))
 
-        self.target_buttons = [self.button_A, self.button_B, self.button_C]
+        self.target_buttons = [self.button_A, self.button_B]
         self.operator_cursor.target_button = self.button_A
+        self.agent_cursor.target_button = self.button_B
 
         self.init_env()
 
@@ -33,6 +34,7 @@ class TaskEnv:
         self.operator_cursor.current_target_button = (
             self.operator_cursor.target_button
         )
+        self.agent_cursor.current_target_button = self.agent_cursor.target_button
 
         self.operator_cursor.trajectory = self.plan_cursor_target(
             self.operator_cursor
@@ -107,6 +109,7 @@ class TaskEnv:
             self.operator_cursor.trajectory_iter = self.make_iter(
                 self.operator_cursor.trajectory
             )
+            self.agent_cursor.current_target_button = self.agent_cursor.target_button
             if random.random() < 0.3:
                 self.operator_cursor.target_change = random.uniform(0.1, 0.6)
 
