@@ -34,7 +34,9 @@ class TaskEnv:
         self.operator_cursor.current_target_button = (
             self.operator_cursor.target_button
         )
-        self.agent_cursor.current_target_button = self.agent_cursor.target_button
+        self.agent_cursor.current_target_button = (
+            self.agent_cursor.target_button
+        )
 
         self.operator_cursor.trajectory = self.plan_cursor_target(
             self.operator_cursor
@@ -63,7 +65,8 @@ class TaskEnv:
 
         if self.operator_cursor.click:
             if self.judge_overlap_cursor(
-                self.operator_cursor, self.operator_cursor.current_target_button
+                self.operator_cursor,
+                self.operator_cursor.current_target_button,
             ):
                 self.operator_cursor.success_click_cnt += 1
                 self.operator_cursor.current_target_button.setChecked(True)
@@ -91,7 +94,9 @@ class TaskEnv:
                         if not button.isChecked()
                     ][0]
                     self.operator_cursor.trajectory = self.plan_cursor_target(
-                        self.operator_cursor, change_probability=1, mode="bezier"
+                        self.operator_cursor,
+                        change_probability=1,
+                        mode="bezier",
                     )
                     self.operator_cursor.trajectory_iter = self.make_iter(
                         self.operator_cursor.trajectory
@@ -109,7 +114,9 @@ class TaskEnv:
             self.operator_cursor.trajectory_iter = self.make_iter(
                 self.operator_cursor.trajectory
             )
-            self.agent_cursor.current_target_button = self.agent_cursor.target_button
+            self.agent_cursor.current_target_button = (
+                self.agent_cursor.target_button
+            )
             if random.random() < 0.3:
                 self.operator_cursor.target_change = random.uniform(0.1, 0.6)
 
