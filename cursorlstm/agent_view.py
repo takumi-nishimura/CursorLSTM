@@ -1,7 +1,7 @@
 from gym_env import TaskEnvWrapper
 from stable_baselines3 import PPO
 
-model = PPO.load("model/cursor_agent")
+model = PPO.load("model/cursor_agent", device="mps")
 
 env = TaskEnvWrapper()
 

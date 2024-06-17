@@ -1,7 +1,7 @@
 import gym
-from gym import spaces
 import numpy as np
 from env import TaskEnv
+from gym import spaces
 from stable_baselines3 import PPO
 
 
@@ -29,6 +29,8 @@ class TaskEnvWrapper(gym.Env):
         self.action_space = spaces.Box(
             low=-10, high=10, shape=(4,), dtype=np.float32
         )
+
+        self.before_distance = 0
 
     def reset(self):
         self.env.init_env()
@@ -96,12 +98,34 @@ class TaskEnvWrapper(gym.Env):
             self.env.change_target_button(self.env.agent_cursor)
 
     def _compute_reward(self):
+        current_distance = np.linalg.norm(
+            np.array(
+                [
+                    self.env.agent_cursor.center_x,
+                    self.env.agent_cursor.center_y,
+                ]
+            )
+            - np.array(
+                [
+                    self.env.agent_cursor.current_target_button.x
+                    + self.env.agent_cursor.current_target_button.width / 2,
+                    self.env.agent_cursor.current_target_button.y
+                    + self.env.agent_cursor.current_target_button.height / 2,
+                ]
+            ),
+        )
+
         if self.env.judge_overlap_cursor(
             self.env.agent_cursor, self.env.agent_cursor.current_target_button
         ):
             self.env.agent_cursor.setClick(True)
+            self.before_distance = 0
             return 1.0
+        elif current_distance < self.before_distance:
+            self.before_distance = current_distance
+            return 0.1
         else:
+            self.before_distance = current_distance
             return -0.01
 
     def _check_done(self):
@@ -113,8 +137,8 @@ class TaskEnvWrapper(gym.Env):
 
 if __name__ == "__main__":
     env = TaskEnvWrapper()
-    model = PPO("MultiInputPolicy", env, verbose=1)
+    model = PPO("MultiInputPolicy", env, verbose=1, device="mps")
 
-    model.learn(total_timesteps=100000)
+    model.learn(total_timesteps=1000000)
 
     model.save("model/cursor_agent")
