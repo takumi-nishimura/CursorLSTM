@@ -1,5 +1,6 @@
 import gym
 import numpy as np
+import torch
 from env import TaskEnv
 from gym import spaces
 from stable_baselines3 import PPO
@@ -137,6 +138,7 @@ class TaskEnvWrapper(gym.Env):
 
 if __name__ == "__main__":
     env = TaskEnvWrapper()
+    device = "cuda:0" if torch.cuda.is_available() else "mps"
     model = PPO("MultiInputPolicy", env, verbose=1, device="cuda:0")
 
     model.learn(total_timesteps=1000000)
