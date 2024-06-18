@@ -137,7 +137,7 @@ class TaskEnvWrapper(gym.Env):
 
 if __name__ == "__main__":
     env = TaskEnvWrapper()
-    model = PPO("MultiInputPolicy", env, verbose=1, device="mps")
+    model = PPO("MultiInputPolicy", env, verbose=1, device="cuda:0")
 
     model.learn(total_timesteps=1000000)
 
