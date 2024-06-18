@@ -9,69 +9,10 @@ from stable_baselines3 import DQN, PPO
 class MyEnv(gym.Env):
     def __init__(self):
         self.WINDOW_SIZE = 600  # 画面サイズの決定
-        # self.ACTION_MAP = np.array(
-        #     [
-        #         [1, 0],
-        #         [1, 1],
-        #         [0, 1],
-        #         [-1, 1],
-        #         [-1, 0],
-        #         [-1, -1],
-        #         [0, -1],
-        #         [1, -1],
-        #     ]
-        # )  # アクションの用意
+        angles = np.arange(0, 2 * np.pi, np.pi / 6)
+        speeds = [0.5, 1, 1.5]
         self.ACTION_MAP = np.array(
-            [
-                [0, 0.5],
-                [np.pi / 6, 0.5],
-                [np.pi / 4, 0.5],
-                [np.pi / 3, 0.5],
-                [np.pi / 2, 0.5],
-                [np.pi * 2 / 3, 0.5],
-                [3 * np.pi / 4, 0.5],
-                [5 * np.pi / 6, 0.5],
-                [np.pi, 0.5],
-                [7 * np.pi / 6, 0.5],
-                [5 * np.pi / 4, 0.5],
-                [4 * np.pi / 3, 0.5],
-                [3 * np.pi / 2, 0.5],
-                [5 * np.pi / 3, 0.5],
-                [7 * np.pi / 4, 0.5],
-                [11 * np.pi / 6, 0.5],
-                [0, 1],
-                [np.pi / 6, 1],
-                [np.pi / 4, 1],
-                [np.pi / 3, 1],
-                [np.pi / 2, 1],
-                [np.pi * 2 / 3, 1],
-                [3 * np.pi / 4, 1],
-                [5 * np.pi / 6, 1],
-                [np.pi, 1],
-                [7 * np.pi / 6, 1],
-                [5 * np.pi / 4, 1],
-                [4 * np.pi / 3, 1],
-                [3 * np.pi / 2, 1],
-                [5 * np.pi / 3, 1],
-                [7 * np.pi / 4, 1],
-                [11 * np.pi / 6, 1],
-                [0, 1.5],
-                [np.pi / 6, 1.5],
-                [np.pi / 4, 1.5],
-                [np.pi / 3, 1.5],
-                [np.pi / 2, 1.5],
-                [np.pi * 2 / 3, 1.5],
-                [3 * np.pi / 4, 1.5],
-                [5 * np.pi / 6, 1.5],
-                [np.pi, 1.5],
-                [7 * np.pi / 6, 1.5],
-                [5 * np.pi / 4, 1.5],
-                [4 * np.pi / 3, 1.5],
-                [3 * np.pi / 2, 1.5],
-                [5 * np.pi / 3, 1.5],
-                [7 * np.pi / 4, 1.5],
-                [11 * np.pi / 6, 1.5],
-            ]
+            [[angle, speed] for speed in speeds for angle in angles]
         )
         self.GOAL_RANGE = 50  # ゴールの範囲設定
 
@@ -83,9 +24,6 @@ class MyEnv(gym.Env):
         LOW = np.array([-np.pi])
         HIGH = np.array([np.pi])
 
-        # self.action_space = gym.spaces.Box(
-        #     low=LOW, high=HIGH, dtype=np.float32
-        # )
         self.observation_space = gym.spaces.Box(
             low=LOW, high=HIGH, dtype=np.float32
         )
