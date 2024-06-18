@@ -2,38 +2,58 @@ import cv2
 import gym
 import gym.spaces
 import numpy as np
-from stable_baselines3 import DQN, PPO
 import torch
+from stable_baselines3 import DQN, PPO
 
 
 class MyEnv(gym.Env):
     def __init__(self):
         self.WINDOW_SIZE = 600  # 画面サイズの決定
+        # self.ACTION_MAP = np.array(
+        #     [
+        #         [1, 0],
+        #         [1, 1],
+        #         [0, 1],
+        #         [-1, 1],
+        #         [-1, 0],
+        #         [-1, -1],
+        #         [0, -1],
+        #         [1, -1],
+        #     ]
+        # )  # アクションの用意
         self.ACTION_MAP = np.array(
             [
-                [1, 0],
-                [1, 1],
-                [0, 1],
-                [-1, 1],
-                [-1, 0],
-                [-1, -1],
-                [0, -1],
-                [1, -1],
+                [0],
+                [np.pi / 6],
+                [np.pi / 4],
+                [np.pi / 3],
+                [np.pi / 2],
+                [np.pi * 2 / 3],
+                [3 * np.pi / 4],
+                [5 * np.pi / 6],
+                [np.pi],
+                [7 * np.pi / 6],
+                [5 * np.pi / 4],
+                [4 * np.pi / 3],
+                [3 * np.pi / 2],
+                [5 * np.pi / 3],
+                [7 * np.pi / 4],
+                [11 * np.pi / 6],
             ]
-        )  # アクションの用意
+        )
         self.GOAL_RANGE = 50  # ゴールの範囲設定
 
         # アクション数定義
-        ACTION_NUM = 8
+        ACTION_NUM = len(self.ACTION_MAP)
         self.action_space = gym.spaces.Discrete(ACTION_NUM)
 
         # 状態の範囲を定義
         LOW = np.array([-np.pi])
         HIGH = np.array([np.pi])
 
-        self.action_space = gym.spaces.Box(
-            low=LOW, high=HIGH, dtype=np.float32
-        )
+        # self.action_space = gym.spaces.Box(
+        #     low=LOW, high=HIGH, dtype=np.float32
+        # )
         self.observation_space = gym.spaces.Box(low=LOW, high=HIGH)
 
         self.reset()
@@ -63,8 +83,8 @@ class MyEnv(gym.Env):
         return observation
 
     def step(self, action_index):
-        # action = self.ACTION_MAP[action_index]
-        action = np.array([np.cos(action_index[0]), np.sin(action_index[0])])
+        action = self.ACTION_MAP[action_index]
+        action = np.array([np.cos(action[0]), np.sin(action[0])])
 
         self.ball_position = self.ball_position - action
 
@@ -116,7 +136,7 @@ class MyEnv(gym.Env):
 if __name__ == "__main__":
     device = "cuda" if torch.cuda.is_available() else "mps"
     env = MyEnv()
-    model = PPO(
+    model = DQN(
         "MlpPolicy", env, verbose=1, tensorboard_log="runs/test", device=device
     )
     model.learn(total_timesteps=100000)
