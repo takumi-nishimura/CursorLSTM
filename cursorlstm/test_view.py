@@ -12,7 +12,7 @@ for i in range(10):
     while True:
         action, _states = model.predict(obs)
         obs, rewards, dones, info = env.step(action)
-        # env.render()
+        env.render()
         if dones:
             print("done!")
             break

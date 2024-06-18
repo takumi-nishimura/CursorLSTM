@@ -159,16 +159,21 @@ class MyEnv(gym.Env):
         # opencvで描画処理してます
         img = np.zeros((self.WINDOW_SIZE, self.WINDOW_SIZE, 3))  # 画面初期化
 
-        cv2.circle(
-            img, tuple(self.goal_position), 10, (0, 255, 0), thickness=-1
-        )  # ゴールの描画
-        cv2.circle(
-            img,
-            tuple(self.goal_position),
-            self.GOAL_RANGE,
-            color=(0, 255, 0),
-            thickness=5,
-        )  # ゴールの範囲の描画
+        for i in range(2):
+            cv2.circle(
+                img,
+                tuple(self.goal_position[i]),
+                10,
+                (0, 255, 0),
+                thickness=-1,
+            )  # ゴールの描画
+            cv2.circle(
+                img,
+                tuple(self.goal_position[i]),
+                self.GOAL_RANGE,
+                color=(0, 255, 0),
+                thickness=5,
+            )  # ゴールの範囲の描画
 
         cv2.circle(
             img,
