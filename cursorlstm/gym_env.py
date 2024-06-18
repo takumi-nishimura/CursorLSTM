@@ -20,9 +20,6 @@ class TaskEnvWrapper(gym.Env):
                 "operator_cursor": spaces.Box(
                     low=0, high=800, shape=(2,), dtype=np.float32
                 ),
-                "agent_cursor": spaces.Box(
-                    low=0, high=800, shape=(2,), dtype=np.float32
-                ),
                 "agent_target": spaces.Box(
                     low=0, high=800, shape=(2,), dtype=np.float32
                 ),
@@ -37,7 +34,7 @@ class TaskEnvWrapper(gym.Env):
     def reset(self):
         self.env.init_env()
         state = self._get_state()
-        self.before_distance = self._compute_distance()
+        self.before_distance = self._distance()
         return state
 
     def step(self, action):
@@ -67,10 +64,6 @@ class TaskEnvWrapper(gym.Env):
             "target_button": target_button,
             "operator_cursor": np.array(
                 [operator_cursor.center_x, operator_cursor.center_y],
-                dtype=np.float32,
-            ),
-            "agent_cursor": np.array(
-                [agent_cursor.center_x, agent_cursor.center_y],
                 dtype=np.float32,
             ),
             "agent_target": np.array(
@@ -119,15 +112,35 @@ class TaskEnvWrapper(gym.Env):
             ),
         )
 
+    def _distance(self):
+        return np.array(
+            [
+                self.env.agent_cursor.center_x,
+                self.env.agent_cursor.center_y,
+            ]
+        ) - np.array(
+            [
+                self.env.agent_cursor.current_target_button.x
+                + self.env.agent_cursor.current_target_button.width / 2,
+                self.env.agent_cursor.current_target_button.y
+                + self.env.agent_cursor.current_target_button.height / 2,
+            ]
+        )
+
     def _compute_reward(self, action):
         reward = 0.0
 
-        current_distance = self._compute_distance()
+        current_distance = self._distance()
 
-        if self.before_distance - current_distance > 0:
+        if current_distance[0] < self.before_distance[0]:
             reward += 1.0
         else:
-            reward -= 0.1
+            reward -= 1.0
+
+        if current_distance[1] < self.before_distance[1]:
+            reward += 1.0
+        else:
+            reward -= 1.0
 
         if action[2] > 0:
             if self.env.judge_overlap_cursor(
