@@ -3,6 +3,7 @@ import gym
 import gym.spaces
 import numpy as np
 from stable_baselines3 import DQN, PPO
+import torch
 
 
 class MyEnv(gym.Env):
@@ -113,9 +114,10 @@ class MyEnv(gym.Env):
 
 
 if __name__ == "__main__":
+    device = "cuda" if torch.cuda.is_available() else "mps"
     env = MyEnv()
     model = PPO(
-        "MlpPolicy", env, verbose=1, tensorboard_log="log", device="mps"
+        "MlpPolicy", env, verbose=1, tensorboard_log="runs/test", device=device
     )
     model.learn(total_timesteps=100000)
     model.save("model/test")
