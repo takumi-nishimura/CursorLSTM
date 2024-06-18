@@ -86,7 +86,9 @@ class MyEnv(gym.Env):
         # self.action_space = gym.spaces.Box(
         #     low=LOW, high=HIGH, dtype=np.float32
         # )
-        self.observation_space = gym.spaces.Box(low=LOW, high=HIGH)
+        self.observation_space = gym.spaces.Box(
+            low=LOW, high=HIGH, dtype=np.float32
+        )
 
         self.reset()
 
@@ -100,14 +102,22 @@ class MyEnv(gym.Env):
         )
         self.goal_position = np.array(
             [
-                np.random.randint(0, self.WINDOW_SIZE),
-                np.random.randint(0, self.WINDOW_SIZE),
+                [
+                    np.random.randint(0, self.WINDOW_SIZE),
+                    np.random.randint(0, self.WINDOW_SIZE),
+                ],
+                [
+                    np.random.randint(0, self.WINDOW_SIZE),
+                    np.random.randint(0, self.WINDOW_SIZE),
+                ],
             ]
         )
 
         # 状態の作成
         vec = self.ball_position - self.goal_position
-        observation = np.arctan2(vec[0], vec[1])  # 角度の計算
+        distance = np.array([np.linalg.norm(v) for v in vec])
+        v = np.argmin(distance)
+        observation = np.arctan2(vec[v][0], vec[v][1])  # 角度の計算
         observation = np.array([observation])
 
         self.before_distance = np.linalg.norm(vec)
@@ -127,11 +137,13 @@ class MyEnv(gym.Env):
 
         # 状態の作成
         vec = self.ball_position - self.goal_position
-        observation = np.arctan2(vec[0], vec[1])  # 角度の計算
+        distance = np.array([np.linalg.norm(v) for v in vec])
+        v = np.argmin(distance)
+        observation = np.arctan2(vec[v][0], vec[v][1])  # 角度の計算
         observation = np.array([observation])
 
         # 報酬の計算
-        distance = np.linalg.norm(vec)  # 距離の計算
+        distance = np.linalg.norm(vec[v])  # 距離の計算
         reward = self.before_distance - distance  # どれだけゴールに近づいたか
 
         # 終了判定
