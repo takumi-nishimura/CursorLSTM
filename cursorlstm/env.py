@@ -23,14 +23,21 @@ class TaskEnv:
             pos=(10, 10),
         )
 
-        self.target_buttons = [self.button_A, self.button_B]
+        self.target_buttons = [self.button_A, self.button_B, self.button_C]
         self.operator_cursor.target_button = self.button_A
         self.agent_cursor.target_button = self.button_B
 
         self.init_env()
 
     def init_env(self):
+        logger.info("Initialize environment")
         self.change_button_pos()
+        self.agent_cursor.setPos(
+            (random.randint(0, 800), random.randint(0, 600))
+        )
+        self.operator_cursor.setPos(
+            (random.randint(0, 800), random.randint(0, 600))
+        )
         self.operator_cursor.current_target_button = (
             self.operator_cursor.target_button
         )
@@ -69,7 +76,9 @@ class TaskEnv:
                 self.operator_cursor.current_target_button,
             ):
                 self.operator_cursor.success_click_cnt += 1
-                self.operator_cursor.current_target_button.setChecked(True)
+                self.operator_cursor.current_target_button.setChecked(
+                    True, self.operator_cursor.name
+                )
             else:
                 self.operator_cursor.trajectory = self.plan_cursor_target(
                     self.operator_cursor, change_probability=1, mode="bezier"
@@ -144,7 +153,7 @@ class TaskEnv:
     def change_button_pos(self):
         button_states = self.getButtonStates()
         for i, button in enumerate(button_states):
-            button.setChecked(False)
+            button.setChecked(False, "system")
             without_self_states = [
                 state for state in button_states if state != button
             ]
@@ -319,10 +328,10 @@ class ButtonState(metaclass=ButtonInstanceTracker):
 
         self.checked = False
 
-    def setChecked(self, check: bool):
+    def setChecked(self, check: bool, by: str):
         self.checked = check
         if check:
-            logger.info(f"{self.name} checked")
+            logger.info(f"{self.name} checked by {by}")
 
     def setPos(self, pos: tuple):
         self.x = pos[0]
@@ -361,7 +370,9 @@ class CursorState:
     def setClick(self, click: bool):
         self.click = click
         if self.click:
-            logger.info(f"{self.name} clicked")
+            logger.info(
+                f"{self.name} clicked {self.current_target_button.name}"
+            )
 
 
 if __name__ == "__main__":
