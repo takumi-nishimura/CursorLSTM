@@ -1,12 +1,12 @@
-from stable_baselines3 import DQN
+from stable_baselines3 import DQN, PPO
 from test_env import MyEnv
 
 env = MyEnv()
 
-model = DQN("MlpPolicy", env, verbose=1, tensorboard_log="log")
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log="log")
 
 # pathを指定して任意の重みをロードする
-model = DQN.load("./save_weights/rl_model_10000_steps")
+model = PPO.load("model/test")
 
 # 10回試行する
 for i in range(10):

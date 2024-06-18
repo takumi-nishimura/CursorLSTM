@@ -1,6 +1,8 @@
-import gym
-import numpy as np
 import cv2
+import gym
+import gym.spaces
+import numpy as np
+from stable_baselines3 import DQN, PPO
 
 
 class MyEnv(gym.Env):
@@ -27,6 +29,10 @@ class MyEnv(gym.Env):
         # 状態の範囲を定義
         LOW = np.array([-np.pi])
         HIGH = np.array([np.pi])
+
+        self.action_space = gym.spaces.Box(
+            low=LOW, high=HIGH, dtype=np.float32
+        )
         self.observation_space = gym.spaces.Box(low=LOW, high=HIGH)
 
         self.reset()
@@ -56,7 +62,8 @@ class MyEnv(gym.Env):
         return observation
 
     def step(self, action_index):
-        action = self.ACTION_MAP[action_index]
+        # action = self.ACTION_MAP[action_index]
+        action = np.array([np.cos(action_index[0]), np.sin(action_index[0])])
 
         self.ball_position = self.ball_position - action
 
@@ -94,8 +101,21 @@ class MyEnv(gym.Env):
         )  # ゴールの範囲の描画
 
         cv2.circle(
-            img, tuple(self.ball_position), 10, (0, 0, 255), thickness=-1
+            img,
+            (int(self.ball_position[0]), int(self.ball_position[1])),
+            10,
+            (0, 0, 255),
+            thickness=-1,
         )  # ボールの描画
 
         cv2.imshow("image", img)
         cv2.waitKey(1)
+
+
+if __name__ == "__main__":
+    env = MyEnv()
+    model = PPO(
+        "MlpPolicy", env, verbose=1, tensorboard_log="log", device="mps"
+    )
+    model.learn(total_timesteps=100000)
+    model.save("model/test")
