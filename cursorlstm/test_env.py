@@ -23,22 +23,54 @@ class MyEnv(gym.Env):
         # )  # アクションの用意
         self.ACTION_MAP = np.array(
             [
-                [0],
-                [np.pi / 6],
-                [np.pi / 4],
-                [np.pi / 3],
-                [np.pi / 2],
-                [np.pi * 2 / 3],
-                [3 * np.pi / 4],
-                [5 * np.pi / 6],
-                [np.pi],
-                [7 * np.pi / 6],
-                [5 * np.pi / 4],
-                [4 * np.pi / 3],
-                [3 * np.pi / 2],
-                [5 * np.pi / 3],
-                [7 * np.pi / 4],
-                [11 * np.pi / 6],
+                [0, 0.5],
+                [np.pi / 6, 0.5],
+                [np.pi / 4, 0.5],
+                [np.pi / 3, 0.5],
+                [np.pi / 2, 0.5],
+                [np.pi * 2 / 3, 0.5],
+                [3 * np.pi / 4, 0.5],
+                [5 * np.pi / 6, 0.5],
+                [np.pi, 0.5],
+                [7 * np.pi / 6, 0.5],
+                [5 * np.pi / 4, 0.5],
+                [4 * np.pi / 3, 0.5],
+                [3 * np.pi / 2, 0.5],
+                [5 * np.pi / 3, 0.5],
+                [7 * np.pi / 4, 0.5],
+                [11 * np.pi / 6, 0.5],
+                [0, 1],
+                [np.pi / 6, 1],
+                [np.pi / 4, 1],
+                [np.pi / 3, 1],
+                [np.pi / 2, 1],
+                [np.pi * 2 / 3, 1],
+                [3 * np.pi / 4, 1],
+                [5 * np.pi / 6, 1],
+                [np.pi, 1],
+                [7 * np.pi / 6, 1],
+                [5 * np.pi / 4, 1],
+                [4 * np.pi / 3, 1],
+                [3 * np.pi / 2, 1],
+                [5 * np.pi / 3, 1],
+                [7 * np.pi / 4, 1],
+                [11 * np.pi / 6, 1],
+                [0, 1.5],
+                [np.pi / 6, 1.5],
+                [np.pi / 4, 1.5],
+                [np.pi / 3, 1.5],
+                [np.pi / 2, 1.5],
+                [np.pi * 2 / 3, 1.5],
+                [3 * np.pi / 4, 1.5],
+                [5 * np.pi / 6, 1.5],
+                [np.pi, 1.5],
+                [7 * np.pi / 6, 1.5],
+                [5 * np.pi / 4, 1.5],
+                [4 * np.pi / 3, 1.5],
+                [3 * np.pi / 2, 1.5],
+                [5 * np.pi / 3, 1.5],
+                [7 * np.pi / 4, 1.5],
+                [11 * np.pi / 6, 1.5],
             ]
         )
         self.GOAL_RANGE = 50  # ゴールの範囲設定
@@ -84,7 +116,12 @@ class MyEnv(gym.Env):
 
     def step(self, action_index):
         action = self.ACTION_MAP[action_index]
-        action = np.array([np.cos(action[0]), np.sin(action[0])])
+        action = np.array(
+            [
+                action[1] * np.cos(action[0]),
+                action[1] * np.sin(action[0]),
+            ]
+        )
 
         self.ball_position = self.ball_position - action
 
