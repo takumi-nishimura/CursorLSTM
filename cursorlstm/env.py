@@ -23,7 +23,7 @@ class TaskEnv:
             pos=(10, 10),
         )
 
-        self.target_buttons = [self.button_A, self.button_B, self.button_C]
+        self.target_buttons = [self.button_A, self.button_B]
         self.operator_cursor.target_button = self.button_A
         self.agent_cursor.target_button = self.button_B
 

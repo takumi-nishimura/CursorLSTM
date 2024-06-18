@@ -15,6 +15,6 @@ while not done:
     action, _ = model.predict(obs, deterministic=True)
     obs, reward, done, _ = env.step(action)
     print(
-        f"Action: {action}, Observation: {obs}, Reward: {reward}, Done: {done}"
+        f"Action: {action}, Agent cursor: {obs['agent_cursor']}, Target: {obs['agent_target']}"
     )
     env.render()

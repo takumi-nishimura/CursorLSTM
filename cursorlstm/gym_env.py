@@ -3,7 +3,8 @@ import numpy as np
 import torch
 from env import TaskEnv
 from gym import spaces
-from stable_baselines3 import PPO
+import stable_baselines3
+from logger import logger
 
 
 class TaskEnvWrapper(gym.Env):
@@ -28,7 +29,7 @@ class TaskEnvWrapper(gym.Env):
             }
         )
         self.action_space = spaces.Box(
-            low=-10, high=10, shape=(4,), dtype=np.float32
+            low=-1, high=1, shape=(4,), dtype=np.float32
         )
 
         self.before_distance = 0
@@ -36,14 +37,15 @@ class TaskEnvWrapper(gym.Env):
     def reset(self):
         self.env.init_env()
         state = self._get_state()
+        self.before_distance = self._compute_distance()
         return state
 
     def step(self, action):
         self._take_action(action)
         self.env.step()
         state = self._get_state()
-        reward = self._compute_reward()
-        done = self._check_done()
+        reward = self._compute_reward(action)
+        done = self._check_done(action)
         return state, reward, done, {}
 
     def _get_state(self):
@@ -57,7 +59,8 @@ class TaskEnvWrapper(gym.Env):
             dtype=np.float32,
         )
         if len(target_button) < 4:
-            target_button = np.pad(target_button, ((0, 2)))
+            target_button = np.pad(target_button, (0, 4 - len(target_button)))
+
         operator_cursor = self.env.operator_cursor
         agent_cursor = self.env.agent_cursor
         return {
@@ -81,25 +84,25 @@ class TaskEnvWrapper(gym.Env):
 
     def _take_action(self, action):
         new_x = np.clip(
-            self.env.agent_cursor.center_x + action[0],
+            self.env.agent_cursor.center_x + action[0] * 10,
             0,
             self.env.main_geometry.width,
         )
         new_y = np.clip(
-            self.env.agent_cursor.center_y + action[1],
+            self.env.agent_cursor.center_y + action[1] * 10,
             0,
             self.env.main_geometry.height,
         )
         self.env.agent_cursor.setPos((new_x, new_y))
 
-        if action[2] > 5:
+        if action[2] > 0:
             self.env.agent_cursor.setClick(True)
 
-        if action[3] > 5:
+        if action[3] > 0:
             self.env.change_target_button(self.env.agent_cursor)
 
-    def _compute_reward(self):
-        current_distance = np.linalg.norm(
+    def _compute_distance(self):
+        return np.linalg.norm(
             np.array(
                 [
                     self.env.agent_cursor.center_x,
@@ -116,31 +119,66 @@ class TaskEnvWrapper(gym.Env):
             ),
         )
 
-        if self.env.judge_overlap_cursor(
+    def _compute_reward(self, action):
+        reward = 0.0
+
+        current_distance = self._compute_distance()
+
+        if self.before_distance - current_distance > 0:
+            reward += 1.0
+        else:
+            reward -= 0.1
+
+        if action[2] > 0:
+            if self.env.judge_overlap_cursor(
+                self.env.agent_cursor,
+                self.env.agent_cursor.current_target_button,
+            ):
+                reward += 3.0
+            else:
+                reward -= 2.0
+
+        if action[3] > 0:
+            if (
+                self.env.agent_cursor.current_target_button
+                != self.env.operator_cursor.current_target_button
+            ):
+                reward += 0.1
+            else:
+                reward -= 0.3
+
+        self.before_distance = current_distance
+        return reward
+
+    def _check_done(self, action):
+        if action[2] > 0 and not self.env.judge_overlap_cursor(
             self.env.agent_cursor, self.env.agent_cursor.current_target_button
         ):
-            self.env.agent_cursor.setClick(True)
-            self.before_distance = 0
-            return 1.0
-        elif current_distance < self.before_distance:
-            self.before_distance = current_distance
-            return 0.1
+            return True
+        elif all(button.isChecked() for button in self.env.target_buttons):
+            return True
         else:
-            self.before_distance = current_distance
-            return -0.01
-
-    def _check_done(self):
-        return all(button.isChecked() for button in self.env.target_buttons)
+            False
 
     def render(self):
         pass
 
 
+def make_env():
+    return TaskEnvWrapper()
+
+
 if __name__ == "__main__":
     env = TaskEnvWrapper()
     device = "cuda:0" if torch.cuda.is_available() else "mps"
-    model = PPO("MultiInputPolicy", env, verbose=1, device="cuda:0")
+    model = stable_baselines3.PPO(
+        "MultiInputPolicy",
+        env,
+        verbose=1,
+        device="cuda:0",
+        tensorboard_log="runs/PPO",
+    )
 
-    model.learn(total_timesteps=1000000)
+    model.learn(total_timesteps=100000)
 
     model.save("model/cursor_agent")
