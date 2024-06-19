@@ -1,8 +1,8 @@
 import gym
 import gym.spaces
 import numpy as np
-import torch
 import stable_baselines3
+import torch
 from env import TaskEnv
 
 
@@ -66,7 +66,7 @@ class MyEnv(gym.Env):
     def _take_action(self, action_idx):
         action = self.ACTION_MAP[action_idx]
         action = np.array(
-            [np.cos(action[0]) * action[1], np.sin(action[0]) * action[1]]
+            [action[0] * np.cos(action[1]), action[0] * np.sin(action[0])]
         )
 
         new_x = np.clip(
