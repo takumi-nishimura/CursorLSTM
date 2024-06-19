@@ -25,7 +25,7 @@ class MyEnv(gym.Env):
         HIGH = np.array([np.pi])
 
         self.observation_space = gym.spaces.Box(
-            low=LOW, high=HIGH, dtype=np.float32
+            low=-np.pi, high=HIGH, shape=(1,), dtype=np.float32
         )
 
         self.reset()

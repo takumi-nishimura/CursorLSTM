@@ -374,6 +374,9 @@ class CursorState:
                 f"{self.name} clicked {self.current_target_button.name}"
             )
 
+    def getPos(self):
+        return np.array([self.center_x, self.center_y])
+
 
 if __name__ == "__main__":
     env = TaskEnv()
